@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="fr">
+
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="description" content="Générateur de cartes de jeu à imprimer sur feuilles A4." />
+		<title>Atelier cartes · générateur A4</title>
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+
+	<body>
+		<header class="topbar">
+			<a class="brand" href="./" aria-label="Accueil">
+				<span class="brand-mark">AC</span>
+				<span><strong>Atelier cartes</strong><small>Générateur A4</small></span>
+			</a>
+			<div class="topbar-actions">
+				<button class="button button-ghost" id="load-example" type="button">Charger l’exemple</button>
+				<button class="button button-primary" id="print-cards" type="button">Générer le PDF
+					<span>↗</span></button>
+			</div>
+		</header>
+		<main class="app-shell">
+			<section class="intro">
+				<div>
+					<p class="eyebrow">Créateur de cartes</p>
+					<h1>Des idées claires,<br /><em>sur le papier.</em></h1>
+					<p class="intro-copy">Ajoutez votre fichier, vérifiez les couleurs et téléchargez un PDF prêt à
+						imprimer en recto-verso.</p>
+				</div>
+				<div class="paper-note"><span>9</span><small>cartes<br />par feuille A4</small></div>
+			</section>
+			<section class="workspace">
+				<aside class="panel controls-panel">
+					<div class="panel-heading"><span class="step">01</span>
+						<div>
+							<h2>Ajouter les cartes</h2>
+							<p>Importez un fichier ou collez vos données.</p>
+						</div>
+					</div>
+					<label class="upload-zone" for="file-input"><span class="upload-icon">↑</span><strong>Choisir un
+							fichier JSON ou CSV</strong><small>ou déposer le fichier ici</small></label>
+					<input id="file-input" type="file" accept=".json,.csv,text/plain" />
+					<div class="data-label"><label class="field-label" for="data-input">Données importées</label><button
+							class="text-button" id="format-data" type="button">Mettre en forme</button></div>
+					<textarea id="data-input" spellcheck="false" aria-label="Données des cartes"></textarea>
+					<div class="input-actions">
+						<span class="file-name" id="file-name">Aucun fichier sélectionné</span>
+						<button class="text-button" id="clear-data" type="button">Effacer</button>
+					</div>
+					<p class="hint">Le champ <code>text</code> est obligatoire. Les familles et couleurs sont détectées
+						automatiquement.</p>
+					<div class="divider"></div>
+					<div class="panel-heading compact"><span class="step">02</span>
+						<div>
+							<h2>Personnaliser</h2>
+							<p>Nom du jeu et impression.</p>
+						</div>
+					</div>
+					<label class="setting"><span>Nom au dos des cartes</span><input id="game-name" type="text"
+							value="NOM DU JEU" maxlength="28" /></label>
+					<div class="back-fields">
+						<label class="field-label">Textes du dos</label>
+						<input id="back-subtitle" class="back-input" type="text" value="JEU DE COMMUNICATION"
+							maxlength="32" placeholder="Sous-titre" aria-label="Sous-titre du dos" />
+						<input id="back-footer" class="back-input" type="text" value="UN JEU POUR MIEUX ÉCHANGER"
+							maxlength="42" placeholder="Mention facultative" aria-label="Mention du dos" />
+						<button class="text-button clear-settings" id="clear-settings" type="button">Oublier mes réglages enregistrés</button>
+					</div>
+					<label class="setting"><span>Retourner les dos horizontalement <span class="info"
+								title="À activer si votre imprimante retourne les feuilles sur le bord long.">i</span></span><input
+							id="mirror-back" type="checkbox" /></label>
+					<div class="legend">
+						<div class="legend-title">
+							<p class="field-label">Couleurs par famille</p><button class="text-button" id="reset-colors"
+								type="button">Réinitialiser</button>
+						</div>
+						<div id="legend-items"></div>
+					</div>
+				</aside>
+				<section class="preview-area">
+					<div class="preview-header">
+						<div>
+							<p class="eyebrow">03 · Vérifier et générer</p>
+							<h2 id="card-count">0 carte</h2>
+						</div><span class="status-pill" id="status">Prêt à générer</span>
+					</div>
+					<div id="message" class="message" role="status" aria-live="polite"></div>
+					<div id="preview" class="preview-grid" aria-label="Aperçu des cartes"></div>
+					<div class="preview-footer"><span>Chaque carte = ⅓ de feuille A4</span><span id="page-count">0 page
+							imprimée</span></div>
+				</section>
+			</section>
+		</main>
+		<section id="print-area" aria-hidden="true"></section>
+		<footer class="site-footer"><span>Atelier cartes</span><span>Vos données restent dans ce navigateur.</span><span>Les pages impaires sont les rectos · les pages
+				paires sont les dos.</span></footer>
+		<script src="app.js"></script>
+	</body>
+
+</html>
