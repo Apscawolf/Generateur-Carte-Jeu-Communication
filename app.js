@@ -41,8 +41,17 @@ const mirrorBack = document.querySelector("#mirror-back");
 const fileName = document.querySelector("#file-name");
 const backSubtitle = document.querySelector("#back-subtitle");
 const backFooter = document.querySelector("#back-footer");
+const backMark = document.querySelector("#back-mark");
+const themeToggle = document.querySelector("#theme-toggle");
 let colorValues = { ...DEFAULT_COLORS };
 const STORAGE_KEY = "atelier-cartes-settings";
+let darkMode = false;
+
+function applyTheme() {
+	document.body.classList.toggle("dark-mode", darkMode);
+	themeToggle.textContent = darkMode ? "Mode clair" : "Mode sombre";
+	themeToggle.setAttribute("aria-pressed", String(darkMode));
+}
 
 function saveSettings() {
 	try {
@@ -51,7 +60,9 @@ function saveSettings() {
 			gameName: gameName.value,
 			backSubtitle: backSubtitle.value,
 			backFooter: backFooter.value,
+			backMark: backMark.value,
 			mirrorBack: mirrorBack.checked,
+			darkMode,
 			colors: colorValues
 		}));
 	} catch (error) {
@@ -67,7 +78,9 @@ function loadSettings() {
 		if (typeof saved.gameName === "string") gameName.value = saved.gameName;
 		if (typeof saved.backSubtitle === "string") backSubtitle.value = saved.backSubtitle;
 		if (typeof saved.backFooter === "string") backFooter.value = saved.backFooter;
+		if (typeof saved.backMark === "string") backMark.value = saved.backMark;
 		if (typeof saved.mirrorBack === "boolean") mirrorBack.checked = saved.mirrorBack;
+		if (typeof saved.darkMode === "boolean") darkMode = saved.darkMode;
 		if (saved.colors && typeof saved.colors === "object") {
 			colorValues = { ...DEFAULT_COLORS, ...saved.colors };
 		}
@@ -124,15 +137,17 @@ function parseCards() {
 	});
 }
 function cardMarkup(card, index, printable = false) {
-	return `<article class="${printable ? "print-card" : "preview-card"}" style="--card-color:${card.color}" ${printable ? `data-game="${escapeHtml(gameName.value || "NOM DU JEU")}"` : ""}>
-	  <div class="card-top"><div><span class="card-type">${escapeHtml(card.type)}</span><span class="card-family">${escapeHtml(card.category)}</span></div><span class="card-number">${String(index + 1).padStart(2, "0")}</span></div>
+	const printSize = card.text.length > 220 ? "7.5pt" : card.text.length > 160 ? "8.5pt" : card.text.length > 110 ? "9pt" : "9.5pt";
+	return `<article class="${printable ? "print-card" : "preview-card"}" style="--card-color:${card.color};--text-size:${printSize}" ${printable ? `data-game="${escapeHtml(gameName.value || "NOM DU JEU")}"` : ""}>
+	  <span class="card-corner" aria-hidden="true"></span>
+	  <div class="card-top"><div><span class="card-type">${escapeHtml(card.type)}</span><span class="card-family">${escapeHtml(card.category)}</span></div></div>
 	  <div class="card-content"><span class="card-label">Situation</span><p class="card-text">${escapeHtml(card.text)}</p></div>
 	  <small class="card-meta"><i class="card-dot"></i><span>${escapeHtml(card.tone || card.category)}</span></small>
   </article>`;
 }
 function pageMarkup(cards, start, back = false) {
 	const pageCards = cards.slice(start, start + 9);
-	if (back) return `<div class="print-page back-page${mirrorBack.checked ? " mirrored" : ""}">${pageCards.map(() => `<div class="print-card" data-game="${escapeHtml(gameName.value || "NOM DU JEU")}" style="--card-color:#e85d3c"><span class="back-mark">AC</span><span class="back-name">${escapeHtml(gameName.value || "NOM DU JEU")}</span><span class="back-subtitle">${escapeHtml(backSubtitle.value)}</span><span class="back-footer">${escapeHtml(backFooter.value)}</span></div>`).join("")}</div>`;
+	if (back) return `<div class="print-page back-page${mirrorBack.checked ? " mirrored" : ""}">${pageCards.map(() => `<div class="print-card" data-game="${escapeHtml(gameName.value || "NOM DU JEU")}" style="--card-color:#e85d3c"><span class="back-mark">${escapeHtml(backMark.value || "AC")}</span><span class="back-name">${escapeHtml(gameName.value || "NOM DU JEU")}</span><span class="back-subtitle">${escapeHtml(backSubtitle.value)}</span><span class="back-footer">${escapeHtml(backFooter.value)}</span></div>`).join("")}</div>`;
 	return `<div class="print-page">${pageCards.map((card, index) => cardMarkup(card, start + index, true)).join("")}</div>`;
 }
 function render() {
@@ -173,12 +188,14 @@ function renderLegend() {
 
 input.value = JSON.stringify(EXAMPLE, null, 2);
 loadSettings();
+applyTheme();
 renderLegend();
 render();
 input.addEventListener("input", render);
 gameName.addEventListener("input", render);
 backSubtitle.addEventListener("input", render);
 backFooter.addEventListener("input", render);
+backMark.addEventListener("input", render);
 mirrorBack.addEventListener("change", render);
 document.querySelector("#format-data").addEventListener("click", formatJson);
 document.querySelector("#load-example").addEventListener("click", () => { input.value = JSON.stringify(EXAMPLE, null, 2); render(); });
@@ -195,6 +212,11 @@ document.querySelector("#clear-data").addEventListener("click", () => {
 	fileName.textContent = "Aucun fichier sélectionné";
 	render();
 });
+themeToggle.addEventListener("click", () => {
+	darkMode = !darkMode;
+	applyTheme();
+	saveSettings();
+});
 document.querySelector("#reset-colors").addEventListener("click", () => {
 	colorValues = { ...DEFAULT_COLORS };
 	renderLegend();
@@ -207,7 +229,10 @@ document.querySelector("#clear-settings").addEventListener("click", () => {
 	gameName.value = "NOM DU JEU";
 	backSubtitle.value = "JEU DE COMMUNICATION";
 	backFooter.value = "UN JEU POUR MIEUX ÉCHANGER";
+	backMark.value = "AC";
 	mirrorBack.checked = false;
+	darkMode = false;
+	applyTheme();
 	colorValues = { ...DEFAULT_COLORS };
 	renderLegend();
 	render();

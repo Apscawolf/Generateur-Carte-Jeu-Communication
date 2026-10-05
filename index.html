@@ -16,6 +16,7 @@
 				<span><strong>Atelier cartes</strong><small>Générateur A4</small></span>
 			</a>
 			<div class="topbar-actions">
+				<button class="button button-ghost" id="theme-toggle" type="button" aria-pressed="false">Mode sombre</button>
 				<button class="button button-ghost" id="load-example" type="button">Charger l’exemple</button>
 				<button class="button button-primary" id="print-cards" type="button">Générer le PDF
 					<span>↗</span></button>
@@ -61,11 +62,16 @@
 					<label class="setting"><span>Nom au dos des cartes</span><input id="game-name" type="text"
 							value="NOM DU JEU" maxlength="28" /></label>
 					<div class="back-fields">
-						<label class="field-label">Textes du dos</label>
-						<input id="back-subtitle" class="back-input" type="text" value="JEU DE COMMUNICATION"
-							maxlength="32" placeholder="Sous-titre" aria-label="Sous-titre du dos" />
-						<input id="back-footer" class="back-input" type="text" value="UN JEU POUR MIEUX ÉCHANGER"
-							maxlength="42" placeholder="Mention facultative" aria-label="Mention du dos" />
+						<label class="field-label">Éléments du dos</label>
+						<label class="back-field"><span>Monogramme dans le cercle</span><input id="back-mark"
+							class="back-input back-mark-input" type="text" value="AC" maxlength="4"
+							aria-label="Monogramme dans le cercle" /></label>
+						<label class="back-field"><span>Texte sous le nom du jeu</span><input id="back-subtitle"
+							class="back-input" type="text" value="JEU DE COMMUNICATION" maxlength="32"
+							aria-label="Texte sous le nom du jeu" /></label>
+						<label class="back-field"><span>Texte tout en bas</span><input id="back-footer"
+							class="back-input" type="text" value="UN JEU POUR MIEUX ÉCHANGER" maxlength="42"
+							aria-label="Texte tout en bas du dos" /></label>
 						<button class="text-button clear-settings" id="clear-settings" type="button">Oublier mes réglages enregistrés</button>
 					</div>
 					<label class="setting"><span>Retourner les dos horizontalement <span class="info"

@@ -12,7 +12,16 @@ Petit site statique, sans installation ni serveur, pour transformer un fichier d
 - Les cartes occupent exactement un tiers de la largeur et de la hauteur d’une feuille A4 (70 × 99 mm), sans marge entre les 9 cases.
 - Les couleurs de chaque famille sont modifiables directement dans la section **Couleurs par famille** ; **Réinitialiser** restaure la légende par défaut.
 - Le dos est personnalisable avec un nom principal, un sous-titre et une mention libre.
+- Les lettres du monogramme dans le cercle du dos sont également personnalisables (jusqu’à 4 caractères).
+- L’éditeur indique maintenant précisément où apparaît chaque élément du dos : monogramme dans le cercle, texte sous le nom, et texte tout en bas.
 - Les données, textes du dos, couleurs et réglages d’impression sont sauvegardés automatiquement dans le stockage local du navigateur. Ils restent sur l’ordinateur utilisé et peuvent être supprimés avec **Oublier mes réglages enregistrés**.
+- Le bouton **Mode sombre** change uniquement l’interface du générateur ; les cartes et le PDF conservent leurs couleurs et leur apparence d’impression.
+- L’aperçu utilise une structure fixe en trois zones (en-tête, contenu, concept) pour éviter que les textes et les indicateurs se chevauchent. Les textes trop longs sont raccourcis proprement avec une ellipse.
+- L’aperçu ajoute un espacement vertical renforcé entre les rangées et reprend le rectangle décoratif en haut à droite dans les cartes du PDF.
+- L’espacement vertical de l’aperçu est indépendant de la grille imprimée A4 : il sert uniquement à rendre la lecture à l’écran plus confortable.
+- Les cartes ne sont pas numérotées : leur identité repose sur le type, la famille, la situation et le concept.
+- Le recto imprimé utilise une bordure continue et un motif diagonal limité à l’en-tête. La taille du texte s’adapte automatiquement à la longueur de chaque situation afin d’éviter les lignes coupées.
+- La barre supérieure reste visible pendant le défilement pour garder les actions principales accessibles.
 
 ## Format JSON recommandé
 

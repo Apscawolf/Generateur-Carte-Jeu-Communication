@@ -9,6 +9,14 @@
 	--accent: #e85d3c
 }
 
+body.dark-mode {
+	--ink: #edf1ef;
+	--muted: #aab4b2;
+	--line: #394341;
+	--paper: #171c1d;
+	--white: #222a2b
+}
+
 * {
 	box-sizing: border-box
 }
@@ -31,13 +39,56 @@ button {
 }
 
 .topbar {
+	position: sticky;
+	top: 0;
+	z-index: 20;
 	height: 78px;
 	padding: 0 clamp(20px, 5vw, 72px);
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	background: #fff;
-	border-bottom: 1px solid var(--line)
+	border-bottom: 1px solid var(--line);
+	box-shadow: 0 4px 18px #20242912
+}
+
+body.dark-mode .topbar,
+body.dark-mode .panel {
+	background: var(--white)
+}
+
+body.dark-mode .button-ghost,
+body.dark-mode .setting input[type=text],
+body.dark-mode .back-input,
+body.dark-mode textarea {
+	color: var(--ink);
+	background: #1b2223;
+	border-color: var(--line)
+}
+
+body.dark-mode .upload-zone {
+	background: #1b2223;
+	border-color: #52615e
+}
+
+body.dark-mode .paper-note {
+	background: #2b2220;
+	border-color: #704337
+}
+
+body.dark-mode .brand-mark {
+	color: #fff;
+	background: var(--accent)
+}
+
+body.dark-mode .button-primary {
+	color: #fff;
+	background: var(--accent)
+}
+
+body.dark-mode .status-pill {
+	color: #b9f1cf !important;
+	background: #193b2b !important
 }
 
 .brand {
@@ -362,6 +413,23 @@ input:focus {
 	font-size: 11px
 }
 
+.back-field {
+	display: block;
+	margin-top: 10px;
+	color: var(--muted);
+	font-size: 10px
+}
+
+.back-field .back-input {
+	margin-top: 5px
+}
+
+.back-mark-input {
+	width: 72px;
+	font-weight: 700;
+	text-align: center
+}
+
 .clear-settings {
 	margin-top: 10px;
 	font-size: 10px
@@ -437,16 +505,19 @@ input:focus {
 .preview-grid {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
-	gap: 16px
+	column-gap: 18px;
+	row-gap: 34px;
+	align-items: start
 }
 
 .preview-card {
 	min-width: 0;
 	position: relative;
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-	aspect-ratio: 1.28/1;
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr) auto;
+	gap: 8px;
+	aspect-ratio: 1.15/1;
+	min-height: 220px;
 	padding: 21px;
 	background: var(--card-color);
 	color: #fff;
@@ -454,15 +525,18 @@ input:focus {
 	overflow: hidden
 }
 
-.preview-card:before {
-	content: "";
+.card-corner {
 	position: absolute;
-	width: 120px;
-	height: 120px;
-	right: -42px;
-	top: -42px;
-	border: 1px solid #ffffff45;
-	transform: rotate(45deg)
+	width: 110px;
+	height: 76px;
+	right: -27px;
+	top: -27px;
+	border: 1px solid #ffffff65;
+	border-radius: 2px;
+	transform: rotate(45deg);
+	box-shadow: 0 0 0 1px #ffffff18;
+	z-index: 1;
+	pointer-events: none
 }
 
 .preview-card:after {
@@ -488,7 +562,7 @@ input:focus {
 }
 
 .card-type {
-	font: 500 9px "DM Mono";
+	font: 600 10px "DM Mono";
 	letter-spacing: .12em;
 	text-transform: uppercase
 }
@@ -496,37 +570,38 @@ input:focus {
 .card-family {
 	max-width: 150px;
 	overflow: hidden;
-	font-size: 9px;
-	opacity: .72;
+	font-size: 10px;
+	opacity: .9;
 	text-overflow: ellipsis;
 	white-space: nowrap
 }
 
-.card-number {
-	font: 10px "DM Mono";
-	opacity: .75
-}
-
 .card-text {
-	margin: 9px 0 5px;
-	font: 600 clamp(10px, 1.1vw, 14px)/1.3 "Space Grotesk";
+	margin: 8px 0 0;
+	font: 600 clamp(10px, 1.05vw, 14px)/1.38 "Space Grotesk";
 	display: -webkit-box;
 	-webkit-box-orient: vertical;
-	-webkit-line-clamp: 5;
+	-webkit-line-clamp: 3;
+	max-height: 3.75em;
 	overflow: hidden
 }
 
 .card-content {
 	position: relative;
 	z-index: 1;
-	padding: 5px 0
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	min-height: 0;
+	padding: 5px 0;
+	overflow: hidden
 }
 
 .card-label {
 	display: inline-block;
 	padding-bottom: 5px;
 	border-bottom: 1px solid #ffffff80;
-	font: 500 8px "DM Mono";
+	font: 600 9px "DM Mono";
 	letter-spacing: .12em;
 	text-transform: uppercase
 }
@@ -537,15 +612,25 @@ input:focus {
 	display: flex;
 	align-items: center;
 	gap: 5px;
-	font-size: 9px;
-	opacity: .86
+	min-height: 14px;
+	padding-bottom: 2px;
+	font-size: 10px;
+	line-height: 1.2;
+	opacity: .95;
+	overflow: hidden
+}
+
+.card-meta span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap
 }
 
 .card-dot {
 	width: 6px;
 	height: 6px;
 	display: inline-block;
-	margin-right: 5px;
+	margin: 0;
 	border: 1px solid #fff;
 	border-radius: 50%;
 	flex: 0 0 6px
@@ -606,11 +691,11 @@ input:focus {
 		position: relative;
 		width: 70mm;
 		height: 99mm;
-		padding: 9mm 7mm;
+		padding: 8mm 7mm;
 		overflow: hidden;
 		color: #202429;
 		background: #fff;
-		border: 0.7mm solid var(--card-color);
+		border: 0.5mm solid var(--card-color);
 		font-family: "DM Sans", sans-serif
 	}
 
@@ -620,7 +705,7 @@ input:focus {
 		top: 0;
 		left: 0;
 		width: 100%;
-		height: 18mm;
+		height: 20mm;
 		background: var(--card-color);
 		border-bottom: 0.4mm solid var(--card-color)
 	}
@@ -628,8 +713,23 @@ input:focus {
 	.print-card:after {
 		content: "";
 		position: absolute;
-		inset: 4mm;
-		border: 0.3mm solid var(--card-color)
+		inset: 3.5mm;
+		border: 0.25mm solid var(--card-color);
+		pointer-events: none
+	}
+
+	.print-card .card-corner {
+		position: absolute;
+		width: 28mm;
+		height: 19mm;
+		right: -6mm;
+		top: -6mm;
+		border: 0.35mm solid #ffffffa8;
+		border-radius: .7mm;
+		transform: rotate(45deg);
+		box-shadow: 0 0 0 .35mm #ffffff30;
+		z-index: 1;
+		pointer-events: none
 	}
 
 	.print-card .card-top {
@@ -647,29 +747,25 @@ input:focus {
 	}
 
 	.print-card .card-type {
-		font: 500 7pt "DM Mono";
+		font: 600 8pt "DM Mono";
 		letter-spacing: .08em
 	}
 
 	.print-card .card-family {
 		max-width: 38mm;
 		overflow: hidden;
-		font-size: 6pt;
+		font-size: 7pt;
 		opacity: .9;
 		text-overflow: ellipsis;
 		white-space: nowrap
 	}
 
-	.print-card .card-number {
-		font: 7pt "DM Mono";
-		opacity: .75
-	}
-
 	.print-card .card-content {
 		position: relative;
 		z-index: 1;
-		margin-top: 10mm;
-		padding: 0 1mm
+		margin-top: 9mm;
+		padding: 0 1mm;
+		overflow: visible
 	}
 
 	.print-card .card-label {
@@ -677,18 +773,15 @@ input:focus {
 		padding-bottom: 1.5mm;
 		color: var(--card-color);
 		border-bottom: 0.4mm solid var(--card-color);
-		font: 500 6pt "DM Mono";
+		font: 600 7pt "DM Mono";
 		letter-spacing: .1em;
 		text-transform: uppercase
 	}
 
 	.print-card .card-text {
-		margin: 6mm 0 4mm;
-		font: 600 10pt/1.35 "Space Grotesk";
-		display: -webkit-box;
-		-webkit-box-orient: vertical;
-		-webkit-line-clamp: 6;
-		overflow: hidden
+		margin: 5mm 0 4mm;
+		font: 600 var(--text-size, 9.5pt)/1.38 "Space Grotesk";
+		overflow-wrap: anywhere
 	}
 
 	.print-card .card-meta {
@@ -701,7 +794,7 @@ input:focus {
 		align-items: center;
 		gap: 1.5mm;
 		color: #596166;
-		font-size: 7.5pt;
+		font-size: 8.5pt;
 	}
 
 	.print-card .card-dot {
@@ -836,20 +929,31 @@ input:focus {
 
 @media(max-width:480px) {
 	.preview-grid {
-		gap: 5px
+		column-gap: 10px;
+		row-gap: 24px
 	}
 
 	.preview-card {
 		padding: 12px 10px
 	}
 
+	.preview-card .card-meta {
+		min-height: 12px
+	}
+
 	.card-text {
-		font-size: 9px
+		font-size: 10px
 	}
 
 	.card-meta,
-	.card-type,
-	.card-number {
-		font-size: 7px
+	.card-type {
+		font-size: 8px
+	}
+
+	.card-corner {
+		width: 86px;
+		height: 60px;
+		right: -23px;
+		top: -23px
 	}
 }
