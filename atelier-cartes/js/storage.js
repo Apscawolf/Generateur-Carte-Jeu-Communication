@@ -1,27 +1,33 @@
 (function () {
-  const KEY = "tribunal-du-chaos-atelier-v1";
-  function clone(value) { return JSON.parse(JSON.stringify(value)); }
-  function load() {
-    try {
-      const saved = localStorage.getItem(KEY);
-      if (!saved) return clone(window.TDC_DATA);
-      const parsed = JSON.parse(saved);
-      if (!parsed || parsed.version !== 1 || !Array.isArray(parsed.cases) || !parsed.settings) throw new Error("Structure de projet invalide.");
-      return parsed;
-    } catch (error) {
-      console.error("Impossible de charger le projet local.", error);
-      window.TDC_STORAGE_LOAD_ERROR = error;
-      return clone(window.TDC_DATA);
-    }
-  }
-  function save(project) {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(project));
-      return true;
-    } catch (error) {
-      console.error("La sauvegarde locale a échoué.", error);
-      throw new Error("La sauvegarde a échoué. L’espace de stockage est peut-être plein : exportez votre projet puis réduisez les images.");
-    }
-  }
-  window.TDC_STORAGE = { load, save, clone };
+	const KEY = "tribunal-du-chaos-atelier-v1";
+	function clone(value) { return JSON.parse(JSON.stringify(value)); }
+	function examples() {
+		const { version, settings, cases } = window.TDC_DATA;
+		return clone({ version, settings, cases });
+	}
+	function load(validate) {
+		try {
+			const saved = localStorage.getItem(KEY);
+			if (!saved) return examples();
+			const parsed = JSON.parse(saved);
+			validate(parsed);
+			return parsed;
+		} catch (error) {
+			console.error("Impossible de charger le projet local.", error);
+			window.TDC_STORAGE_LOAD_ERROR = error;
+			return examples();
+		}
+	}
+	function save(project, replaceUnreadable = false) {
+		if (window.TDC_STORAGE_LOAD_ERROR && !replaceUnreadable) throw new Error("Le projet local illisible ou incompatible est protégé : importez un projet compatible ou réinitialisez le grimoire pour le remplacer.");
+		try {
+			localStorage.setItem(KEY, JSON.stringify(project));
+			if (replaceUnreadable) delete window.TDC_STORAGE_LOAD_ERROR;
+			return true;
+		} catch (error) {
+			console.error("La sauvegarde locale a échoué.", error);
+			throw new Error("La sauvegarde a échoué. L’espace de stockage est peut-être plein : exportez votre projet puis réduisez les images.");
+		}
+	}
+	window.TDC_STORAGE = { load, save, clone };
 })();

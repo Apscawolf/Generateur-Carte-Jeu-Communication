@@ -1,37 +1,273 @@
-@page { size: A4 portrait; margin: 0; }
+@page {
+	size: A4 portrait;
+	margin: 0;
+}
+
 @media print {
-  html, body { width: 210mm !important; margin: 0 !important; padding: 0 !important; background: white !important; overflow: visible !important; }
-  body * { visibility: hidden !important; }
-  #print-output, #print-output * { visibility: visible !important; }
-  body > .app-shell { display: block !important; width: 210mm !important; min-height: 0 !important; }
-  .sidebar, .topbar, #toast, #app-content > :not(#print-output) { display: none !important; }
-  .workspace { display: block !important; width: 210mm !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; background: none !important; }
-  #app-content { display: block !important; width: 210mm !important; margin: 0 !important; padding: 0 !important; }
-  #print-output { display: block !important; position: static; width: 210mm; margin: 0; padding: 0; }
-  #print-output.hidden { display: block !important; }
-  .print-sheet { box-sizing: border-box; width: 210mm; height: 297mm; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3,70mm); grid-template-rows: repeat(3,99mm); page-break-after: always; break-after: page; page-break-inside: avoid; break-inside: avoid; overflow: hidden; }
-  .print-sheet:last-child { page-break-after: auto; break-after: auto; }
-  .print-card { box-sizing: border-box; width: 70mm; height: 99mm; min-width: 70mm; min-height: 99mm; overflow: hidden; padding: 0; position: relative; border: .2mm dashed #746b58; background: #e4d4ad !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .print-card-inner { box-sizing: border-box; width: calc(100% - 4.8mm); height: calc(100% - 4.8mm); margin: 2.4mm; border: .45mm double var(--family-color, #846838); outline: .25mm solid var(--family-color, #a58a55); outline-offset: -1.5mm; padding: 3.5mm 3mm 2.5mm; background: #f2e7cb !important; display: flex; flex-direction: column; text-align: center; color: #29241c; position:relative; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .print-card-inner.frame-simple { outline: 0; }
-  .print-card-inner:before,.print-card-inner:after { content:"❧"; position:absolute; color:var(--card-accent, #846838); font:10pt Georgia,serif; }
-  .print-card-inner:before { top:1.5mm;left:2mm; }
-  .print-card-inner:after { bottom:1.5mm;right:2mm;transform:rotate(180deg); }
-  .print-card-back .print-card-inner:before,.print-card-back .print-card-inner:after { display:none; }
-  .card-ornament { color:var(--card-accent, #846838); font-size:11pt; line-height:1; margin-bottom:1mm; }
-  .print-card-kind { font: 600 7pt var(--display); color: var(--family-color, #775e33); letter-spacing: .08em; text-transform: uppercase; }
-  .print-card-title { font: 600 11pt var(--display); line-height: 1.13; margin: 3mm 0; overflow-wrap: anywhere; }
-  .print-illustration-frame { position:relative; flex:0 0 26mm; width:100%; height:26mm; margin:0 0 2mm; padding:.7mm; border:.9mm double #80633b; outline:.25mm solid #c4a66a; outline-offset:-1mm; background:linear-gradient(135deg,#dfc991,#927043) !important; box-shadow:inset 0 0 0 .25mm #f4e5bb,0 .4mm 1mm rgba(38,29,17,.28); -webkit-print-color-adjust:exact;print-color-adjust:exact; }
-  .print-illustration-frame:before,.print-illustration-frame:after { position:absolute; z-index:1; color:#73552e; font:7pt Georgia,serif; line-height:1; text-shadow:0 .2mm #f1dfb3; }
-  .print-illustration-frame:before { content:"❧"; top:-.4mm;left:-.4mm; }
-  .print-illustration-frame:after { content:"❧"; right:-.4mm;bottom:-.4mm;transform:rotate(180deg); }
-  .print-card-image { display:block; width:100%; height:100%; object-fit:cover; object-position:center; }
-  .print-card-content { font: 9pt var(--serif); line-height: 1.16; text-align: left; white-space: pre-wrap; overflow-wrap: anywhere; flex: 1; overflow: hidden; }
-  .print-card-role { border-top: .25mm solid #bba676; padding-top: 1.5mm; margin-top: 1.5mm; font: 600 7pt var(--display); }
-  .print-card-back { background: #243532 !important; color: #ead9ae; }
-  .print-card-back .print-card-inner { background: repeating-linear-gradient(45deg,#263533,#263533 2mm,#2d3e38 2mm,#2d3e38 4mm) !important; color: #ead9ae; border-color: #c0a15e; justify-content: center; }
-  .print-back-emblem { display:block;width:38mm;height:38mm;font-size:52pt;line-height:38mm;text-align:center;color:var(--card-accent, #d7bd7d);margin:0 auto 4mm; }
-  .print-back-name { font:600 11pt var(--display); color:#efdfb9; }
-  .print-back-subtitle,.print-back-note {font:9pt var(--serif);color:#c4b58f;margin-top:2mm}
-  .print-blank { background: white !important; }
+
+	html,
+	body {
+		width: 210mm !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		background: white !important;
+		overflow: visible !important;
+	}
+
+	body * {
+		visibility: hidden !important;
+	}
+
+	#print-output,
+	#print-output * {
+		visibility: visible !important;
+	}
+
+	body>.app-shell {
+		display: block !important;
+		width: 210mm !important;
+		min-height: 0 !important;
+	}
+
+	.sidebar,
+	.topbar,
+	#toast,
+	#app-content> :not(#print-output) {
+		display: none !important;
+	}
+
+	.workspace {
+		display: block !important;
+		width: 210mm !important;
+		min-height: 0 !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		background: none !important;
+	}
+
+	#app-content {
+		display: block !important;
+		width: 210mm !important;
+		margin: 0 !important;
+		padding: 0 !important;
+	}
+
+	#print-output {
+		display: block !important;
+		position: static;
+		width: 210mm;
+		margin: 0;
+		padding: 0;
+	}
+
+	#print-output.hidden {
+		display: block !important;
+	}
+
+	.print-sheet {
+		box-sizing: border-box;
+		width: 210mm;
+		height: 297mm;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(3, 70mm);
+		grid-template-rows: repeat(3, 99mm);
+		page-break-after: always;
+		break-after: page;
+		page-break-inside: avoid;
+		break-inside: avoid;
+		overflow: hidden;
+	}
+
+	.print-sheet:last-child {
+		page-break-after: auto;
+		break-after: auto;
+	}
+
+	.print-card {
+		box-sizing: border-box;
+		width: 70mm;
+		height: 99mm;
+		min-width: 70mm;
+		min-height: 99mm;
+		overflow: hidden;
+		padding: 0;
+		position: relative;
+		border: .2mm dashed #746b58;
+		background: #e4d4ad !important;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+
+	.print-card-inner {
+		box-sizing: border-box;
+		width: calc(100% - 4.8mm);
+		height: calc(100% - 4.8mm);
+		margin: 2.4mm;
+		border: .45mm double var(--family-color, #846838);
+		outline: .25mm solid var(--family-color, #a58a55);
+		outline-offset: -1.5mm;
+		padding: 3.5mm 3mm 2.5mm;
+		background: #f2e7cb !important;
+		display: flex;
+		flex-direction: column;
+		text-align: center;
+		color: #29241c;
+		position: relative;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+
+	.print-card-inner.frame-simple {
+		outline: 0;
+	}
+
+	.print-card-inner:before,
+	.print-card-inner:after {
+		content: "❧";
+		position: absolute;
+		color: var(--card-accent, #846838);
+		font: 10pt Georgia, serif;
+	}
+
+	.print-card-inner:before {
+		top: 1.5mm;
+		left: 2mm;
+	}
+
+	.print-card-inner:after {
+		bottom: 1.5mm;
+		right: 2mm;
+		transform: rotate(180deg);
+	}
+
+	.print-card-back .print-card-inner:before,
+	.print-card-back .print-card-inner:after {
+		display: none;
+	}
+
+	.card-ornament {
+		color: var(--card-accent, #846838);
+		font-size: 11pt;
+		line-height: 1;
+		margin-bottom: 1mm;
+	}
+
+	.print-card-kind {
+		font: 600 7pt var(--display);
+		color: var(--family-color, #775e33);
+		letter-spacing: .08em;
+		text-transform: uppercase;
+	}
+
+	.print-card-title {
+		font: 600 11pt var(--display);
+		line-height: 1.13;
+		margin: 3mm 0;
+		overflow-wrap: anywhere;
+	}
+
+	.print-illustration-frame {
+		position: relative;
+		flex: 0 0 26mm;
+		width: 100%;
+		height: 26mm;
+		margin: 0 0 2mm;
+		padding: .7mm;
+		border: .9mm double #80633b;
+		outline: .25mm solid #c4a66a;
+		outline-offset: -1mm;
+		background: linear-gradient(135deg, #dfc991, #927043) !important;
+		box-shadow: inset 0 0 0 .25mm #f4e5bb, 0 .4mm 1mm rgba(38, 29, 17, .28);
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+
+	.print-illustration-frame:before,
+	.print-illustration-frame:after {
+		position: absolute;
+		z-index: 1;
+		color: #73552e;
+		font: 7pt Georgia, serif;
+		line-height: 1;
+		text-shadow: 0 .2mm #f1dfb3;
+	}
+
+	.print-illustration-frame:before {
+		content: "❧";
+		top: -.4mm;
+		left: -.4mm;
+	}
+
+	.print-illustration-frame:after {
+		content: "❧";
+		right: -.4mm;
+		bottom: -.4mm;
+		transform: rotate(180deg);
+	}
+
+	.print-card-image {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: center;
+	}
+
+	.print-card-content {
+		font: 9pt var(--serif);
+		line-height: 1.16;
+		text-align: left;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+		flex: 1;
+		overflow: hidden;
+	}
+
+	.print-card-role {
+		border-top: .25mm solid #bba676;
+		padding-top: 1.5mm;
+		margin-top: 1.5mm;
+		font: 600 7pt var(--display);
+	}
+
+	.print-card-back {
+		background: #243532 !important;
+		color: #ead9ae;
+	}
+
+	.print-card-back .print-card-inner {
+		background: repeating-linear-gradient(45deg, #263533, #263533 2mm, #2d3e38 2mm, #2d3e38 4mm) !important;
+		color: #ead9ae;
+		border-color: #c0a15e;
+		justify-content: center;
+	}
+
+	.print-back-emblem {
+		display: block;
+		width: 38mm;
+		height: 38mm;
+		font-size: 52pt;
+		line-height: 38mm;
+		text-align: center;
+		color: var(--card-accent, #d7bd7d);
+		margin: 0 auto 4mm;
+	}
+
+	.print-back-name {
+		font: 600 11pt var(--display);
+		color: #efdfb9;
+	}
+
+	.print-back-subtitle,
+	.print-back-note {
+		font: 9pt var(--serif);
+		color: #c4b58f;
+		margin-top: 2mm
+	}
+
+	.print-blank {
+		background: white !important;
+	}
 }

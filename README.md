@@ -7,15 +7,13 @@ Générateur hors ligne de cartes pour **Le Tribunal du Chaos**. Ouvrir [`atelie
 Chaque affaire utilise une feuille A4 dédiée de **3 × 3 emplacements**, soit neuf cartes de **70 × 99 mm** :
 
 1. `affaire` — contexte public
-2. `accusateur` — version de l’accusation
-3. `accuse` — version de la défense
-4. `faits` — faits établis, éléments incertains et questions
-5–6. `temoin` — jusqu’à deux témoins facultatifs
-7. `jury` — mission des jurés
-8. `verdict` — faits prouvés et mécanismes pédagogiques
-9. `debrief` — analyse et pistes de désamorçage
+2. `accuse` — version de la défense
+3. `accusateur` — version de l’accusation
+4. 4-7 `temoin` — quatre témoignages distincts
+8. `debrief` — analyse et pistes de désamorçage
+9. `faits` — faits établis, éléments incertains et questions
 
-Les sept cartes de base sont créées avec chaque nouvelle affaire. Ajouter au besoin zéro, un ou deux témoins. Les emplacements inutilisés restent vierges, avec leurs lignes de coupe. Le paquet ne peut pas dépasser neuf cartes ni contenir plus de deux témoins ; chaque type de base est unique. Dupliquer une affaire pour créer une variante complète.
+Ces neuf cartes sont créées pour chaque nouvelle affaire : il reste à les remplir. Les types et le rattachement au dossier sont fixes. Dupliquer une affaire pour créer une variante complète. Les cartes vierges d’une nouvelle affaire ne constituent pas encore une affaire rédigée.
 
 **Impression :** une affaire = une feuille de rectos ; avec les versos, son verso est imprimé sur la feuille suivante. Pour plusieurs affaires, les feuilles sont produites dans l’ordre affaire 1 recto, affaire 1 verso, affaire 2 recto, affaire 2 verso, etc. Les filtres de type et la sélection individuelle laissent les autres emplacements vierges, sans mélanger les affaires. Le nombre d’exemplaires répète le paquet entier. Les traits pointillés autour de chaque emplacement servent de lignes de coupe.
 
@@ -57,7 +55,7 @@ Le total du texte correspond aux valeurs non vides de `fields`, assemblées avec
 ## Sauvegarde, images et import
 
 - Les modifications sont sauvegardées dans le stockage local du navigateur.
-- Les textes d’exemple enregistrés par une ancienne version sont raccourcis automatiquement uniquement lorsqu’ils n’ont pas été modifiés ; les textes personnalisés et illustrations déjà ajoutées sont conservés.
+- Seuls les projets respectant le gabarit de neuf cartes sont acceptés, y compris pour le chargement local. Un projet local incompatible reste protégé contre l’écrasement ; importer un projet compatible ou réinitialiser le grimoire pour le remplacer.
 - **Exporter le grimoire JSON** télécharge un fichier portable, y compris les illustrations personnalisées intégrées en data URI.
 - **Importer un grimoire** accepte les fichiers JSON ou CSV décrits ci-dessous et remplace le projet courant après confirmation.
 - Les fichiers image personnalisés sont intégrés comme data URI `data:image/...;base64,...` dans le JSON/CSV. Taille maximale par image importée dans l’interface : 3 Mo.
@@ -77,7 +75,7 @@ Ces œuvres fantasy sont publiées sous **CC0 1.0** sur Openclipart ; elles sont
 
 Le JSON est le format recommandé : il représente proprement les tableaux, les textes multilignes et les images, et peut être importé directement. Produire un objet racine `version`, `settings`, `cases`. Les identifiants doivent être uniques. Une affaire contient ses cartes directement dans `cards` ; il n’y a pas de `caseId` dans chaque carte.
 
-Les types acceptés sont `affaire`, `accusateur`, `accuse`, `faits`, `temoin`, `jury`, `verdict`, `debrief`. Chaque carte doit avoir `id`, `type`, `title`, `role`, `fields` (objet de chaînes). `image` et `imagePosition` sont facultatifs et ne s’appliquent qu’à la carte `affaire`. L’image peut être une data URI ; si l’affaire n’a pas d’image, l’application en choisit une au hasard parmi les illustrations fantasy intégrées. Dans une affaire : sept types de base au maximum une fois chacun, zéro à deux `temoin`, neuf cartes au maximum. Pour une affaire complète, fournir les sept types de base.
+Les types acceptés sont `affaire`, `accuse`, `accusateur`, `temoin`, `debrief`, `faits`. Chaque carte doit avoir `id`, `type`, `title`, `role`, `fields` (objet de chaînes, en privilégiant les clés ci-dessous). Les autres champs textuels importés restent modifiables. `image` et `imagePosition` sont facultatifs et ne s’appliquent qu’à la carte `affaire`. L’image peut être une data URI ; si l’affaire n’a pas d’image, l’application en choisit une au hasard parmi les illustrations fantasy intégrées. Chaque affaire doit contenir exactement une carte de chaque type sauf `temoin`, qui doit apparaître quatre fois.
 
 Champs recommandés par type :
 
@@ -88,8 +86,6 @@ Champs recommandés par type :
 | `accuse` | `objective`, `content`, `available`, `evidence`, `unknown` |
 | `faits` | `established`, `uncertain`, `questions` |
 | `temoin` | `content`, `facts`, `indirect`, `interpretation`, `reliability` |
-| `jury` | `mission`, `content` |
-| `verdict` | `certain`, `unproven`, `mechanism`, `secondary`, `explanation`, `takeaway` |
 | `debrief` | `origin`, `aggravating`, `bias`, `needs`, `deescalation`, `question` |
 
 `settings` contient notamment `gameName`, `subtitle`, `emblem`, `backNote`, `accent`, `fontStyle`, `frameStyle`, `ornament` et `familyColors`. Les couleurs sont des codes hexadécimaux. Pour une image personnalisée, fournir une data URI et non un chemin local.
@@ -123,16 +119,16 @@ Exemple compact, valide et directement importable (les textes peuvent être remp
       {"id":"linge-accuse","type":"accuse","title":"Brasier","role":"Défense","fields":{"objective":"Expliquer l’incident et réparer le dommage.","content":"J’ai éternué en sortant de ma grotte.","available":"Le pollen irritait mon nez.","evidence":"Je n’ai pas visé le jardin.","unknown":"Le vent poussait vers l’étendoir."}},
       {"id":"linge-faits","type":"faits","title":"Faits et indices","role":"Repères de l’enquête","fields":{"established":"Le linge a brûlé ; le vent allait vers la corde.","uncertain":"Personne n’a vu l’origine de la flamme.","questions":"Un encens a-t-il déclenché le feu ?"}},
       {"id":"linge-temoin-a","type":"temoin","title":"Pimprenelle","role":"Témoin","fields":{"content":"J’ai vu de la fumée près de la corde.","facts":"Le vent soufflait vers le linge.","indirect":"Un apprenti parle d’un rugissement.","interpretation":"J’ai d’abord soupçonné le dragon.","reliability":"J’ai vu la fumée, pas le départ du feu."}},
-      {"id":"linge-temoin-b","type":"temoin","title":"Le jeune écuyer","role":"Témoin facultatif","fields":{"content":"J’ai aperçu une lueur près de la corde.","facts":"Je n’ai vu personne produire la flamme.","indirect":"On m’a dit que Brasier avait éternué.","interpretation":"La lueur pouvait venir de l’encens.","reliability":"J’ai vu la lueur mais pas son origine."}},
-      {"id":"linge-jury","type":"jury","title":"Mission des jurés","role":"Jury","fields":{"mission":"Établir les faits, le mécanisme d’escalade et une prochaine étape d’apaisement.","content":"Séparer observations et suppositions."}},
-      {"id":"linge-verdict","type":"verdict","title":"Ce que révèle l’enquête","role":"Verdict","fields":{"certain":"Le linge a brûlé et le vent soufflait vers lui.","unproven":"L’intention de Brasier n’est pas établie.","mechanism":"Attribution hostile.","secondary":"Biais de confirmation.","explanation":"Un dommage ne prouve pas une intention.","takeaway":"Vérifier les circonstances avant de conclure."}},
+      {"id":"linge-temoin-b","type":"temoin","title":"Le jeune écuyer","role":"Témoin","fields":{"content":"J’ai aperçu une lueur près de la corde.","facts":"Je n’ai vu personne produire la flamme.","indirect":"On m’a dit que Brasier avait éternué.","interpretation":"La lueur pouvait venir de l’encens.","reliability":"J’ai vu la lueur mais pas son origine."}},
+      {"id":"linge-temoin-c","type":"temoin","title":"L’apprenti de la forge","role":"Témoin","fields":{"content":"Je travaillais près du jardin.","facts":"J’ai entendu un bruit avant la fumée.","indirect":"On m’a parlé de la dispute.","interpretation":"Le bruit pouvait être un éternuement.","reliability":"Je ne voyais pas le départ du feu."}},
+      {"id":"linge-temoin-d","type":"temoin","title":"La marchande d’encens","role":"Témoin","fields":{"content":"J’ai vendu de l’encens au voisin.","facts":"Il se consume avec une petite flamme.","indirect":"On m’a dit que le linge avait brûlé.","interpretation":"Une étincelle a pu s’envoler.","reliability":"Je n’étais pas présente à l’incident."}},
       {"id":"linge-debrief","type":"debrief","title":"Après l’audience","role":"Débrief","fields":{"origin":"L’étendoir gênait l’accès à la grotte.","aggravating":"La dispute a orienté les soupçons.","bias":"Attribution hostile et biais de confirmation.","needs":"Sécurité, accès et respect du voisinage.","deescalation":"Vérifier les indices et convenir d’un emplacement sûr.","question":"Qu’auriez-vous vérifié avant de conclure ?"}}
     ]
   }]
 }
 ```
 
-Les deux témoins sont facultatifs : retirer l’un ou les deux conserve une affaire valide ; leurs emplacements sur la feuille restent blancs. Pour choisir une illustration précise, renseigner `image` sur l’objet affaire ou sur sa carte `affaire` avec une data URI. Sinon, l’application en choisit une au hasard à l’import.
+Les quatre témoins sont obligatoires. Pour choisir une illustration précise, renseigner `image` sur l’objet affaire ou sur sa carte `affaire` avec une data URI. Sinon, l’application en choisit une au hasard à l’import. L’ordre dans le tableau n’est pas imposé : l’impression utilise l’ordre du gabarit ci-dessus.
 
 ## Format CSV accepté
 
@@ -150,14 +146,14 @@ Colonnes facultatives :
 case_summary,case_context,case_disagreement,case_image,card_id,image_data_url,image_position
 ```
 
-- `card_order` est un nombre de 0 à 8 ; il détermine l’ordre des cartes.
+- `card_order` est un entier unique de 0 à 8 par affaire ; il détermine notamment l’ordre des quatre témoins. Les familles sont imprimées dans l’ordre du gabarit.
 - `fields_json` utilise les clés du tableau JSON ci-dessus.
 - `card_id` est facultatif ; l’application crée un identifiant s’il manque.
 - `case_image` et `image_data_url` sur la ligne de la carte `affaire` doivent être des data URI ou rester vides, jamais des chemins de disque. Une image renseignée sur une autre ligne de carte n’est pas utilisée. Si l’affaire n’a aucune image, l’application en choisit une au hasard.
 - Les paramètres graphiques ne sont pas stockés en CSV ; l’import CSV reprend le thème par défaut.
 - Toutes les lignes de même `case_id` doivent garder le même `case_title`.
 
-Exemple de deux lignes ; continuer avec les sept cartes de base et, si souhaité, jusqu’à deux lignes `temoin` :
+Exemple de deux lignes seulement, à compléter obligatoirement avec les sept autres cartes du gabarit avant import :
 
 ```csv
 case_id,case_title,case_summary,case_context,case_disagreement,card_order,card_type,card_title,role,fields_json,image_data_url,image_position
@@ -167,7 +163,7 @@ linge-dragon,"Le dragon et le linge royal","Un linge brûlé","Le linge brûle p
 
 ## Consigne à transmettre à une IA
 
-> Génère un projet JSON importable par L’Atelier du Greffier. Respecte le schéma de `README.md` : sept cartes de base uniques par affaire (`affaire`, `accusateur`, `accuse`, `faits`, `jury`, `verdict`, `debrief`), zéro à deux cartes `temoin`, neuf cartes maximum. Chaque carte a un identifiant unique, un titre, un rôle et les champs adaptés à son type. Fournis des faits observés distincts des interprétations, des informations confidentielles cohérentes entre les rôles, et un débrief qui propose plusieurs pistes. Respecte les limites : titre ≤ 48 caractères, rôle ≤ 32, texte cumulé ≤ 650 caractères sans image ou ≤ 450 avec image. Retourne uniquement le JSON, sans Markdown ni chemins locaux d’images.
+> Génère un projet JSON importable par L’Atelier du Greffier en respectant exactement le schéma et les clés `fields` de ce README. Pour chaque affaire, produis exactement neuf cartes : une `affaire` présentant le contexte public, une `accuse` et une `accusateur` avec leurs objectifs et leurs versions, quatre `temoin` distincts avec des observations et des limites de fiabilité, une `debrief` analysant le conflit et proposant plusieurs pistes de désamorçage, et une `faits` séparant faits établis, incertitudes et questions. Ne crée aucune carte `jury` ou `verdict`. Attribue des identifiants uniques aux affaires et à toutes les cartes ; fournis un titre, un rôle et des champs textuels utiles à chacune. Distingue clairement observations directes, informations rapportées et interprétations ; assure la cohérence des informations confidentielles et évite de présenter une hypothèse comme un fait. Respecte les limites : titre ≤ 48 caractères, rôle ≤ 32, texte cumulé ≤ 650 caractères sans image ou ≤ 450 avec image. Retourne uniquement le JSON, sans Markdown ni chemins locaux d’images.
 
 ## Personnalisation hors ligne
 
