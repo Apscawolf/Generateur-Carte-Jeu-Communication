@@ -19,7 +19,7 @@
 		),
 		// Accusateur : casque de chevalier
 		accusateur: svg(
-			`<path d="M16 58V28c0-12 7-20 16-20s16 8 16 20v30z" fill="${BLUE}" stroke="${CREAM}" stroke-width="2" stroke-linejoin="round"/><rect x="16" y="26" width="32" height="5" fill="#16232b"/><rect x="29.5" y="26" width="5" height="26" fill="#16232b"/><path d="M32 8c3-6 12-6 14-1-4-1-9 0-14 1z" fill="${RED}"/><circle cx="24" cy="44" r="1.6" fill="${CREAM}"/><circle cx="40" cy="44" r="1.6" fill="${CREAM}"/>`
+			`<path d="M32 14C30 4 38 0 48 2c-3 3-4 6-3 9 4-1 8-1 10 1-6 0-10 2-12 5z" fill="${RED}" stroke="#8f3a2c" stroke-width="1" stroke-linejoin="round"/><path d="M13 30C13 16 21 9 32 9s19 7 19 21v14l-5 6v6H18v-6l-5-6z" fill="${BLUE}" stroke="${CREAM}" stroke-width="2" stroke-linejoin="round"/><path d="M32 9v47" stroke="${CREAM}" stroke-width="2" opacity=".6"/><path d="M17 28h30v4H17z" fill="#16232b"/><path d="M32 32v11" stroke="#16232b" stroke-width="3"/><g fill="#16232b"><circle cx="22" cy="46" r="1.5"/><circle cx="22" cy="51" r="1.5"/><circle cx="42" cy="46" r="1.5"/><circle cx="42" cy="51" r="1.5"/></g><g fill="${GOLD}"><circle cx="16" cy="24" r="1.4"/><circle cx="48" cy="24" r="1.4"/></g><path d="M18 56h28" stroke="${GOLD}" stroke-width="3" stroke-linecap="round"/>`
 		),
 		// Accusé : épée
 		accuse: svg(
