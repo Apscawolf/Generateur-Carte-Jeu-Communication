@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Crimson+Pro:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Crimson+Pro:wght@400;500;600;700&display=swap");
 
 :root {
 	--night: #172123;
@@ -14,7 +14,7 @@
 	--wine: #733b3b;
 	--green: #435c4b;
 	--card-accent: #733b3b;
-	--line: rgba(68, 51, 30, .24);
+	--line: rgba(68, 51, 30, 0.24);
 	--serif: "Crimson Pro", Georgia, serif;
 	--display: "Cinzel", Georgia, serif;
 }
@@ -54,7 +54,7 @@ button {
 	padding: 27px 19px 18px;
 	display: flex;
 	flex-direction: column;
-	border-right: 1px solid rgba(215, 189, 125, .3);
+	border-right: 1px solid rgba(215, 189, 125, 0.3);
 	min-height: 100vh;
 }
 
@@ -65,7 +65,7 @@ button {
 	padding: 5px 5px 25px;
 	color: inherit;
 	text-decoration: none;
-	border-bottom: 1px solid rgba(215, 189, 125, .25);
+	border-bottom: 1px solid rgba(215, 189, 125, 0.25);
 }
 
 .brand-seal {
@@ -74,17 +74,11 @@ button {
 	width: 44px;
 	height: 44px;
 	border: 1px solid var(--gold);
-	outline: 1px solid rgba(185, 152, 83, .4);
+	outline: 1px solid rgba(185, 152, 83, 0.4);
 	outline-offset: 3px;
 	border-radius: 50%;
 	color: var(--gold-light);
 	font-size: 26px;
-}
-
-.balance-mark {
-	display: block;
-	font-size: 31px;
-	line-height: 1;
 }
 
 .brand small,
@@ -96,7 +90,7 @@ button {
 .nav-caption,
 .eyebrow {
 	font-family: var(--display);
-	letter-spacing: .12em;
+	letter-spacing: 0.12em;
 	font-size: 9px;
 	color: var(--gold-light);
 }
@@ -121,7 +115,7 @@ button {
 	color: #d9ceb2;
 	background: transparent;
 	padding: 11px 12px;
-	transition: .15s ease;
+	transition: 0.15s ease;
 }
 
 .nav-link span {
@@ -134,7 +128,7 @@ button {
 
 .nav-link:hover,
 .nav-link.active {
-	background: rgba(215, 189, 125, .11);
+	background: rgba(215, 189, 125, 0.11);
 	color: #fff3d4;
 }
 
@@ -160,7 +154,7 @@ button {
 	width: 100%;
 	color: #d7cba9;
 	background: transparent;
-	border: 1px solid rgba(215, 189, 125, .24);
+	border: 1px solid rgba(215, 189, 125, 0.24);
 	padding: 8px 10px;
 	text-align: left;
 	margin: 6px 0;
@@ -224,7 +218,7 @@ button {
 }
 
 .button:hover {
-	background: rgba(115, 59, 59, .08);
+	background: rgba(115, 59, 59, 0.08);
 }
 
 .button-gold {
@@ -240,7 +234,7 @@ button {
 
 .button-danger {
 	color: #7a3432;
-	border-color: rgba(122, 52, 50, .45);
+	border-color: rgba(122, 52, 50, 0.45);
 }
 
 .button-small {
@@ -271,7 +265,7 @@ button {
 
 .ornament-rule {
 	border: 0;
-	border-top: 1px solid rgba(111, 82, 42, .35);
+	border-top: 1px solid rgba(111, 82, 42, 0.35);
 	position: relative;
 	margin: 18px 0;
 }
@@ -292,9 +286,11 @@ button {
 	padding: 31px 35px;
 	min-height: 190px;
 	color: #eadcb8;
-	background: linear-gradient(110deg, rgba(20, 31, 31, .96), rgba(37, 49, 44, .95)), repeating-linear-gradient(45deg, transparent, transparent 7px, rgba(255, 255, 255, .025) 8px);
+	background:
+		linear-gradient(110deg, rgba(20, 31, 31, 0.96), rgba(37, 49, 44, 0.95)),
+		repeating-linear-gradient(45deg, transparent, transparent 7px, rgba(255, 255, 255, 0.025) 8px);
 	border: 1px solid #987b43;
-	outline: 1px solid rgba(152, 123, 67, .4);
+	outline: 1px solid rgba(152, 123, 67, 0.4);
 	outline-offset: 4px;
 	display: flex;
 	align-items: center;
@@ -306,7 +302,7 @@ button {
 .hero:after {
 	content: "❧";
 	position: absolute;
-	color: rgba(215, 189, 125, .4);
+	color: rgba(215, 189, 125, 0.4);
 	font-size: 31px;
 }
 
@@ -343,7 +339,13 @@ button {
 	color: var(--gold-light);
 	min-width: 90px;
 	text-align: center;
-	filter: drop-shadow(0 0 9px rgba(215, 189, 125, .3));
+	filter: drop-shadow(0 0 9px rgba(215, 189, 125, 0.3));
+}
+
+.balance-mark {
+	display: block;
+	font-size: 31px;
+	line-height: 1;
 }
 
 .hero-mark .balance-mark {
@@ -359,13 +361,13 @@ button {
 }
 
 .stat {
-	background: rgba(250, 244, 227, .65);
-	border: 1px solid rgba(109, 83, 43, .34);
+	background: rgba(250, 244, 227, 0.65);
+	border: 1px solid rgba(109, 83, 43, 0.34);
 	padding: 15px 18px;
 	display: flex;
 	align-items: center;
 	gap: 14px;
-	box-shadow: 2px 3px 0 rgba(92, 69, 34, .1);
+	box-shadow: 2px 3px 0 rgba(92, 69, 34, 0.1);
 }
 
 .stat-symbol {
@@ -394,7 +396,7 @@ button {
 	padding: 17px 18px 15px;
 	background: linear-gradient(135deg, #f9f1dc, #e8d9b8);
 	border: 1px solid #a68a58;
-	box-shadow: 3px 4px 0 rgba(74, 54, 30, .12);
+	box-shadow: 3px 4px 0 rgba(74, 54, 30, 0.12);
 	min-height: 212px;
 }
 
@@ -402,7 +404,7 @@ button {
 	content: "";
 	position: absolute;
 	inset: 4px;
-	border: 1px solid rgba(125, 94, 49, .24);
+	border: 1px solid rgba(125, 94, 49, 0.24);
 	pointer-events: none;
 }
 
@@ -442,7 +444,7 @@ button {
 .type-label {
 	color: #775d30;
 	font: 600 10px var(--display);
-	letter-spacing: .11em;
+	letter-spacing: 0.11em;
 	text-transform: uppercase;
 }
 
@@ -451,7 +453,7 @@ button {
 	border: 1px dashed #9d875a;
 	text-align: center;
 	color: #75684e;
-	background: rgba(255, 250, 235, .35);
+	background: rgba(255, 250, 235, 0.35);
 }
 
 .editor-layout {
@@ -462,10 +464,10 @@ button {
 }
 
 .panel {
-	background: rgba(249, 242, 223, .78);
-	border: 1px solid rgba(109, 83, 43, .38);
+	background: rgba(249, 242, 223, 0.78);
+	border: 1px solid rgba(109, 83, 43, 0.38);
 	padding: 17px;
-	box-shadow: 2px 3px 0 rgba(92, 69, 34, .08);
+	box-shadow: 2px 3px 0 rgba(92, 69, 34, 0.08);
 }
 
 .panel h3 {
@@ -542,7 +544,7 @@ button {
 }
 
 .field textarea:disabled {
-	opacity: .65;
+	opacity: 0.65;
 }
 
 .card-list {
@@ -619,7 +621,7 @@ button {
 .field textarea:focus,
 .field select:focus {
 	border-color: #806538;
-	box-shadow: 0 0 0 2px rgba(185, 152, 83, .16);
+	box-shadow: 0 0 0 2px rgba(185, 152, 83, 0.16);
 }
 
 .field textarea {
@@ -647,7 +649,7 @@ button {
 	padding: 11px;
 	position: relative;
 	background: #e4d4ad;
-	box-shadow: 0 8px 18px rgba(35, 27, 17, .22);
+	box-shadow: 0 8px 18px rgba(35, 27, 17, 0.22);
 }
 
 .card-preview-inner {
@@ -696,7 +698,7 @@ button {
 .preview-kind {
 	font: 600 8px var(--display);
 	color: var(--family-color, #775e33);
-	letter-spacing: .1em;
+	letter-spacing: 0.1em;
 	margin-top: 3px;
 	text-transform: uppercase;
 }
@@ -710,16 +712,17 @@ button {
 
 .illustration-frame {
 	position: relative;
-	flex: 0 0 78px;
+	flex: none;
 	width: 100%;
-	height: 78px;
 	margin: 0 0 7px;
 	padding: 3px;
 	border: 4px double #80633b;
 	outline: 1px solid #c4a66a;
 	outline-offset: -2px;
 	background: linear-gradient(135deg, #dfc991, #927043);
-	box-shadow: inset 0 0 0 1px #f4e5bb, 0 1px 3px rgba(38, 29, 17, .28);
+	box-shadow:
+		inset 0 0 0 1px #f4e5bb,
+		0 1px 3px rgba(38, 29, 17, 0.28);
 }
 
 .illustration-frame:before,
@@ -727,7 +730,9 @@ button {
 	position: absolute;
 	z-index: 1;
 	color: #73552e;
-	font: 10px Georgia, serif;
+	font:
+		10px Georgia,
+		serif;
 	line-height: 1;
 	text-shadow: 0 1px #f1dfb3;
 }
@@ -748,9 +753,8 @@ button {
 .preview-image {
 	display: block;
 	width: 100%;
-	height: 100%;
+	aspect-ratio: 7 / 3;
 	object-fit: cover;
-	object-position: center;
 }
 
 .preview-text {
@@ -769,60 +773,6 @@ button {
 	border-top: 1px solid #bba676;
 	padding-top: 5px;
 	margin-top: 5px;
-}
-
-.preview-back {
-	justify-content: center;
-	background: repeating-linear-gradient(45deg, #263533, #263533 5px, #2d3e38 5px, #2d3e38 10px);
-	color: #ead9ae;
-}
-
-.preview-back:before,
-.preview-back:after {
-	display: none;
-}
-
-.preview-back .back-frame {
-	border: 1px solid #c0a15e;
-	outline: 1px solid rgba(192, 161, 94, .6);
-	outline-offset: -6px;
-	height: 100%;
-	display: grid;
-	place-content: center;
-	gap: 10px;
-	padding: 14px;
-}
-
-.preview-back .back-emblem {
-	display: block;
-	width: 58px;
-	height: 58px;
-	font-size: 52px;
-	line-height: 58px;
-	text-align: center;
-	margin: 0 auto;
-	color: var(--card-accent);
-}
-
-.preview-back h3 {
-	font: 600 12px var(--display);
-	margin: 0;
-	color: #efdfb9;
-}
-
-.preview-back p {
-	font-size: 10px;
-	margin: 0;
-	color: #c4b58f;
-}
-
-.back-sample .emblem {
-	display: grid;
-	place-items: center;
-	width: 70px;
-	height: 70px;
-	font-size: 60px;
-	color: var(--gold-light);
 }
 
 .preview-switch {
@@ -845,8 +795,8 @@ button {
 	gap: 10px;
 	align-items: end;
 	padding: 13px;
-	background: rgba(249, 242, 223, .72);
-	border: 1px solid rgba(109, 83, 43, .34);
+	background: rgba(249, 242, 223, 0.72);
+	border: 1px solid rgba(109, 83, 43, 0.34);
 	margin: 14px 0;
 }
 
@@ -861,7 +811,7 @@ button {
 	color: #625132;
 }
 
-.toolbar input[type=checkbox] {
+.toolbar input[type="checkbox"] {
 	width: auto;
 }
 
@@ -875,8 +825,8 @@ button {
 	grid-template-columns: 1fr auto auto;
 	align-items: center;
 	gap: 10px;
-	background: rgba(249, 242, 223, .8);
-	border: 1px solid rgba(109, 83, 43, .3);
+	background: rgba(249, 242, 223, 0.8);
+	border: 1px solid rgba(109, 83, 43, 0.3);
 	padding: 10px 13px;
 }
 
@@ -903,35 +853,6 @@ button {
 	align-items: start;
 }
 
-.back-sample {
-	background: var(--night-2);
-	color: var(--parchment);
-	padding: 22px;
-	text-align: center;
-	border: 1px solid var(--gold);
-	outline: 1px solid rgba(185, 152, 83, .45);
-	outline-offset: -7px;
-	min-height: 230px;
-	display: grid;
-	place-content: center;
-	gap: 10px;
-}
-
-.back-sample .emblem {
-	margin: auto;
-}
-
-.back-sample h3 {
-	font: 600 16px var(--display);
-	margin: 0
-}
-
-.back-sample p {
-	margin: 0;
-	color: #c8b994;
-	font-size: 14px
-}
-
 .toast {
 	position: fixed;
 	right: 22px;
@@ -944,7 +865,7 @@ button {
 	box-shadow: 0 5px 18px #0003;
 	opacity: 0;
 	transform: translateY(8px);
-	transition: .18s;
+	transition: 0.18s;
 	pointer-events: none;
 	max-width: min(450px, 90vw);
 }
@@ -1006,11 +927,6 @@ button {
 	transform: rotate(180deg);
 }
 
-.mini-card.back-mini:before,
-.mini-card.back-mini:after {
-	display: none;
-}
-
 .mini-card.mini-blank {
 	background: #eee7d7;
 }
@@ -1022,19 +938,7 @@ button {
 
 .mini-card small {
 	font-size: 6px;
-	overflow: hidden
-}
-
-.mini-card.back-mini {
-	background: #263533;
-	color: #e5d4aa;
-	justify-content: center;
-}
-
-.mini-back-emblem {
-	width: 36px;
-	height: 36px;
-	font-size: 32px;
+	overflow: hidden;
 }
 
 .sheet-caption {
@@ -1167,12 +1071,12 @@ button {
 	}
 
 	.hero-mark {
-		min-width: 50px
+		min-width: 50px;
 	}
 
 	.hero-mark .balance-mark {
 		width: 46px;
-		height: 46px
+		height: 46px;
 	}
 
 	.stat-grid {
@@ -1181,19 +1085,19 @@ button {
 
 	.stat {
 		padding: 10px 8px;
-		gap: 7px
+		gap: 7px;
 	}
 
 	.stat-symbol {
-		font-size: 19px
+		font-size: 19px;
 	}
 
 	.stat strong {
-		font-size: 20px
+		font-size: 20px;
 	}
 
 	.stat span:last-child {
-		font-size: 12px
+		font-size: 12px;
 	}
 
 	.editor-layout,
@@ -1210,7 +1114,7 @@ button {
 	}
 
 	.field.full {
-		grid-column: auto
+		grid-column: auto;
 	}
 
 	.library-row {
@@ -1218,6 +1122,121 @@ button {
 	}
 
 	.library-row .row-actions {
-		grid-column: 1/-1
+		grid-column: 1/-1;
 	}
+}
+/* Verso des cartes : dimensions en em, la taille de police du conteneur fixe l'échelle */
+.preview-back {
+	font-size: 10px;
+	padding: 0;
+	background: none;
+	box-shadow: 0 8px 18px rgba(35, 27, 17, 0.22);
+}
+
+.back-face {
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
+	padding: 1.6em;
+	background: var(--back-color, #3b3b44);
+	-webkit-print-color-adjust: exact;
+	print-color-adjust: exact;
+}
+
+.back-inner {
+	box-sizing: border-box;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1.2em;
+	padding: 1.2em;
+	text-align: center;
+	color: #f6e8c0;
+	border: 0.25em double #f0d48a;
+	outline: 0.1em solid rgba(240, 212, 138, 0.55);
+	outline-offset: -0.7em;
+	background:
+		radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.16), transparent 62%),
+		repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.13) 0 0.6em, transparent 0.6em 1.2em);
+}
+
+.back-icon {
+	display: block;
+	width: 11em;
+	height: 11em;
+}
+
+.back-icon svg {
+	width: 100%;
+	height: 100%;
+}
+
+.back-inner strong {
+	font: 600 1.5em var(--display);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+.back-inner small {
+	font-size: 1em;
+	color: #e6d6a8;
+}
+
+.back-gallery {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+	gap: 14px;
+}
+
+.back-gallery figure {
+	margin: 0;
+}
+
+.back-gallery .card-preview {
+	width: 100%;
+	font-size: 5px;
+}
+
+.back-gallery figcaption {
+	text-align: center;
+	font: 600 11px var(--display);
+	margin-top: 6px;
+}
+
+.side-icon {
+	width: 100%;
+	flex: none;
+	display: flex;
+	justify-content: center;
+	padding: 5px 0 7px;
+	background: #2f3b3f;
+	margin-bottom: 7px;
+}
+
+.side-icon svg {
+	width: 56px;
+	height: 56px;
+}
+
+.sec {
+	font-weight: 700;
+	color: var(--family-color, #795b30);
+}
+
+.mini-card.back-mini {
+	background: var(--back-color, #3b3b44);
+	justify-content: center;
+	align-items: center;
+}
+
+.mini-icon svg {
+	width: 26px;
+	height: 26px;
+	display: block;
+}
+
+.preview-text.with-image {
+	font-size: 10px;
 }

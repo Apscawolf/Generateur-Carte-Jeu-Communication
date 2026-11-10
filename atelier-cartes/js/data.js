@@ -1,41 +1,186 @@
+// Données d'exemple et constantes du jeu (format v2 : 9 cartes par affaire).
 (function () {
-	const card = (type, title, role, fields) => ({ id: crypto.randomUUID(), type, title, role, image: "", fields });
-	const illustrations = [{"src":"assets/illustrations/dragon.svg","name":"Dragon fantasy","source":"https://openclipart.org/detail/319543","license":"CC0 1.0"},{"src":"assets/illustrations/sorcier.svg","name":"Sorcier","source":"https://openclipart.org/detail/344786/wizard","license":"CC0 1.0"},{"src":"assets/illustrations/chevalier.svg","name":"Chevalier en joute","source":"https://openclipart.org/detail/351169/jousting-knight","license":"CC0 1.0"},{"src":"assets/illustrations/porte-fantasy.svg","name":"Porte de carte fantasy","source":"https://openclipart.org/detail/11461/rpg-map-symbols-gate","license":"CC0 1.0"}];
+	const uid = () =>
+		window.crypto && crypto.randomUUID
+			? crypto.randomUUID()
+			: "id-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+	const card = (type, title, role, fields) => ({ id: uid(), type, title, role, image: "", fields });
+
+	const JUGE_MISSION =
+		"Vous êtes le maître du jeu. Vous ne défendez personne : vous écoutez, vous cherchez la vérité, vous tranchez.";
+	const JUGE_STEPS =
+		"1. Lisez l’affaire à voix haute.\n2. Premier tour : chacun parle 30 secondes (sablier), accusateur, accusé, puis témoins.\n3. Second tour : chacun parle de nouveau 30 secondes.\n4. À vous de trouver la vérité : donnez votre avis sur l’affaire.\n5. Lisez ensemble la carte Débrief.";
+	const juge = () => card("juge", "Le juge", "Maître du jeu", { mission: JUGE_MISSION, steps: JUGE_STEPS });
+
+	const settings = {
+		gameName: "Le Tribunal du Chaos",
+		subtitle: "Chroniques du royaume et conflits en audience",
+		accent: "#733b3b",
+		fontStyle: "ornate",
+		frameStyle: "double"
+	};
+
 	const cases = [
-		{ id: "linge-dragon", title: "Le dragon et le linge royal", summary: "Un dragon est accusé d’avoir carbonisé le linge de son voisin après une querelle d’étendoir.", context: "Une flamme a brûlé trois draps sur la corde de maître Aubépine. Le dragon Brasier habite la grotte voisine et s’était plaint de l’étendoir, placé près de son entrée.", disagreement: "Le voisin affirme que le dragon a soufflé volontairement sur le linge. Brasier dit avoir éternué et nie toute intention de nuire.", cards: [
-			card("affaire", "Le royaume contre Brasier", "Audience publique", {"content":"Trois draps brûlent près de la grotte de Brasier.","facts":"Brasier avait demandé le déplacement de la corde.","interpretations":"Vengeance ou éternuement accidentel ?"}),
-			card("accuse", "Brasier, dragon de la colline", "Défense", {"objective":"Expliquer le feu et réparer les dégâts.","content":"Vous avez éternué en sortant ; vous regrettez les draps.","available":"Le pollen doré irritait votre nez.","evidence":"Vous n’avez pas visé le jardin.","unknown":"Un encens brûlait près de l’étendoir."}),
-			card("accusateur", "Maître Aubépine, voisin lésé", "Accusation", {"objective":"Obtenir réparation et libérer l’entrée du jardin.","available":"Vous avez entendu un grondement avant la fumée.","evidence":"Les draps sont noircis ; une dispute a eu lieu.","interpretation":"Vous pensez que Brasier s’est vengé.","unknown":"Un encens brûlait ; le vent poussait vers la corde."}),
-			card("temoin", "Pimprenelle, gardienne du jardin", "Témoin", {"content":"Vous avez vu une lueur près de la corde.","facts":"Le vent soufflait vers l’étendoir.","indirect":"Un apprenti parle d’un rugissement.","interpretation":"Vous avez d’abord soupçonné Brasier.","reliability":"Vous n’avez pas vu le départ du feu."}),
-			card("temoin", "Le jeune écuyer", "Témoin", {"content":"Vous avez aperçu un éclat avant la fumée.","facts":"L’encens brûlait sous la fenêtre.","indirect":"On vous a dit que Brasier avait éternué.","interpretation":"La lueur venait peut-être de l’encens.","reliability":"Vous avez vu la lueur, pas sa source."}),
-			card("temoin", "L’apprenti de la forge", "Témoin", {"content":"Vous travailliez près du jardin au petit matin.","facts":"Vous avez entendu un bruit avant de voir la fumée.","indirect":"On vous a parlé d’une dispute à propos de la corde.","interpretation":"Le bruit pouvait être un éternuement.","reliability":"Vous ne voyiez ni Brasier ni le départ du feu."}),
-			card("temoin", "La marchande d’encens", "Témoin", {"content":"Vous avez vendu un bâton d’encens au voisin.","facts":"L’encens se consume avec une petite flamme.","indirect":"On vous a dit que le linge avait brûlé.","interpretation":"Une étincelle a pu s’envoler.","reliability":"Vous n’étiez pas présente lors de l’incident."}),
-			card("debrief", "Après l’audience", "Débrief", {"origin":"La corde gênait l’accès à la grotte.","aggravating":"La demande de Brasier a été ignorée.","bias":"Le voisin a privilégié l’hypothèse de vengeance.","needs":"Accès, sécurité et respect mutuel.","deescalation":"Vérifier l’encens, déplacer la corde et discuter réparation.","question":"Que faudrait-il vérifier avant d’accuser ?"}),
-			card("faits", "Faits et indices", "Repères de l’enquête", {"established":"Les draps ont brûlé ; un encens se consumait.","uncertain":"Personne n’a vu l’origine de la flamme.","questions":"Qui a allumé l’encens ? D’où venait le feu ?"}),
-		] },
-		{ id: "balai-sorcieres", title: "Le balai des deux sorcières", summary: "Deux sorcières revendiquent le même balai, disparu puis retrouvé devant l’atelier de réparation.", context: "Mirelda présente une facture récente. Séléné utilise ce balai depuis plusieurs années et affirme l’avoir confié à l’artisan pour une réparation.", disagreement: "Le balai a été déplacé par l’apprenti réparateur. Chacune interprète la présence de l’autre comme une tentative de s’approprier l’objet.", cards: [
-			card("affaire", "L’affaire du balai envolé", "Audience publique", {"content":"Mirelda et Séléné réclament un balai retrouvé à l’atelier.","facts":"Mirelda a une facture ; Séléné l’utilisait depuis longtemps.","interpretations":"Achat récent ou objet confié pour réparation ?"}),
-			card("accuse", "Séléné, sorcière des marais", "Défenderesse", {"objective":"Retrouver votre balai et son manche gravé.","content":"Vous l’avez confié à l’artisan pour réparation.","available":"Une marque en lune se trouve sous la poignée.","evidence":"Vous connaissez la fente près du manche.","unknown":"Mirelda a acheté un modèle ressemblant au vôtre."}),
-			card("accusateur", "Mirelda, sorcière collectionneuse", "Demanderesse", {"objective":"Récupérer le balai acheté au marché.","available":"Votre facture décrit un modèle « Nuit-de-Chêne ».","evidence":"Le numéro de série figure sur votre reçu.","interpretation":"Vous croyez que Séléné veut garder votre achat.","unknown":"Deux balais semblables étaient à l’atelier."}),
-			card("temoin", "Toupin, apprenti réparateur", "Témoin", {"content":"Vous avez déplacé un balai vers le vestibule.","facts":"Deux balais sombres étaient sur l’établi.","indirect":"Le maître doute que la facture corresponde.","interpretation":"Vous pensiez le dépôt autorisé.","reliability":"Vous n’avez pas vérifié à qui il appartenait."}),
-			card("temoin", "Maître Chardon, artisan", "Témoin", {"content":"Vous avez reçu un balai de Séléné à réparer.","facts":"Les deux objets ont des gravures différentes.","indirect":"Mirelda a montré sa facture après le déplacement.","interpretation":"Une erreur d’étiquette est possible.","reliability":"Vous n’avez assisté à aucun achat."}),
-			card("temoin", "La vendeuse du marché", "Témoin", {"content":"Vous avez vendu un balai à Mirelda.","facts":"Plusieurs balais du même modèle étaient en vente.","indirect":"Vous avez appris qu’un balai était contesté.","interpretation":"La facture pourrait concerner un autre exemplaire.","reliability":"Vous ne reconnaissez pas le balai de l’atelier."}),
-			card("temoin", "Le coursier de l’atelier", "Témoin", {"content":"Vous avez apporté des étiquettes à l’atelier.","facts":"Une étiquette était décollée près de l’établi.","indirect":"L’apprenti vous a parlé de deux balais.","interpretation":"Les objets ont pu être confondus.","reliability":"Vous n’avez pas vu qui a déplacé les balais."}),
-			card("debrief", "Après l’audience", "Débrief", {"origin":"L’atelier n’a pas étiqueté les dépôts.","aggravating":"Chacune a défendu sa version sans vérifier l’autre.","bias":"La rivalité a été supposée.","needs":"Reconnaissance et sécurité de l’achat.","deescalation":"Comparer la gravure et la facture, puis convenir d’un prêt ou d’un délai.","question":"Quelle solution serait juste sans preuve immédiate ?"}),
-			card("faits", "Faits et indices", "Repères de l’enquête", {"established":"Deux balais semblables étaient en réparation.","uncertain":"La facture ne désigne peut-être pas le bon objet.","questions":"Comparer gravure, série et registre de dépôt."}),
-		] },
-		{ id: "fantome-chateau", title: "Le fantôme trop bruyant", summary: "Un fantôme est accusé de traverser volontairement les chambres du château pendant la nuit.", context: "Plusieurs habitants ont entendu des bruits dans les couloirs. Le fantôme traverse régulièrement certaines chambres depuis que l’escalier a été déplacé.", disagreement: "Les habitants pensent qu’il les dérange exprès. Le fantôme affirme s’être perdu dans des passages modifiés pendant les travaux.", cards: [
-			card("affaire", "Les nuits agitées de Brumelune", "Audience publique", {"content":"Des bruits nocturnes réveillent les habitants du château.","facts":"Brumelune traverse les chambres depuis les travaux.","interpretations":"Veut-il effrayer ou a-t-il perdu son chemin ?"}),
-			card("accuse", "Brumelune, fantôme des galeries", "Défense", {"objective":"Retrouver votre galerie sans effrayer personne.","content":"Depuis les travaux, vous vous perdez dans les couloirs.","available":"Votre ancien repère était une porte bleue.","evidence":"Vous pouvez décrire votre trajet nocturne.","unknown":"Les portes claquent et réveillent les habitants."}),
-			card("accusateur", "Dame Pivoine, châtelaine", "Accusation", {"objective":"Retrouver le calme pendant la nuit.","available":"Trois portes ont claqué près de vos chambres.","evidence":"Vous avez noté l’heure et le lieu des bruits.","interpretation":"Vous pensez que Brumelune provoque les habitants.","unknown":"L’escalier a été déplacé récemment."}),
-			card("temoin", "Ronce, veilleur de nuit", "Témoin", {"content":"Vous avez guidé Brumelune, perdu à chaque embranchement.","facts":"L’escalier a changé ; une porte a claqué.","indirect":"Un résident dit avoir entendu un rire.","interpretation":"Vous aviez d’abord cru à une farce.","reliability":"Vous avez observé une seule nuit."}),
-			card("temoin", "Lise, chambrière", "Témoin", {"content":"Vous avez vu Brumelune ressortir en s’excusant.","facts":"Le fantôme cherchait l’ancienne galerie.","indirect":"Les chaînes résonnent dans le corridor.","interpretation":"Les bruits semblaient intentionnels.","reliability":"Vous ignorez ce qu’il voulait faire."}),
-			card("temoin", "Le maître des travaux", "Témoin", {"content":"Vous avez dirigé les travaux du château.","facts":"L’escalier a été déplacé et une porte repeinte.","indirect":"On vous a signalé des bruits la nuit.","interpretation":"Les nouveaux repères peuvent dérouter.","reliability":"Vous n’avez pas observé le fantôme la nuit."}),
-			card("temoin", "Le jardinier du château", "Témoin", {"content":"Vous arrosiez la cour près de la galerie.","facts":"Vous avez entendu une porte claquer.","indirect":"Une habitante parle de chaînes dans le corridor.","interpretation":"Un courant d’air a pu fermer la porte.","reliability":"Vous n’avez pas vu qui traversait les chambres."}),
-			card("debrief", "Après l’audience", "Débrief", {"origin":"Les travaux ont déplacé l’escalier.","aggravating":"Les habitants ont accusé sans se parler.","bias":"Le bruit a été pris pour une provocation.","needs":"Repos pour les habitants, repères pour Brumelune.","deescalation":"Baliser un trajet et réparer les portes bruyantes.","question":"Comment réduire la gêne sans juger l’intention ?"}),
-			card("faits", "Faits et indices", "Repères de l’enquête", {"established":"Des bruits ont été entendus après le déplacement de l’escalier.","uncertain":"Aucun témoin n’a établi une intention de nuire.","questions":"Quel itinéraire Brumelune suivait-il avant les travaux ?"}),
-		] },
+		{
+			id: "linge-dragon",
+			title: "Le dragon et le linge royal",
+			color: "#7a2e2e",
+			summary: "Un dragon est accusé d’avoir carbonisé le linge de son voisin après une querelle d’étendoir.",
+			cards: [
+				card("affaire", "Le royaume contre Brasier", "Audience publique", {
+					content:
+						"Trois draps ont brûlé sur la corde à linge de maître Aubépine, tout près de la grotte du dragon Brasier.",
+					accusation: "Maître Aubépine accuse Brasier d’avoir soufflé sur le linge exprès.",
+					defense: "Brasier affirme ne pas l’avoir fait exprès."
+				}),
+				juge(),
+				card("accusateur", "Maître Aubépine, voisin lésé", "Accusateur", {
+					objective: "Obtenir réparation et libérer l’entrée du jardin.",
+					facts:
+						"Trois draps sont noircis.\nVous avez entendu un grondement juste avant la fumée.\nVous aviez refusé de déplacer la corde à linge."
+				}),
+				card("accuse", "Brasier, dragon de la colline", "Accusé", {
+					objective: "Vous disculper et sauver votre réputation.",
+					facts:
+						"Vous aviez demandé de déplacer la corde, près de votre entrée.\nVous avez éternué en sortant, le nez irrité par le pollen.\nUn bâton d’encens brûlait sous la fenêtre ce matin-là."
+				}),
+				card("temoin", "Pimprenelle, gardienne du jardin", "Témoin", {
+					facts:
+						"Vous avez vu une lueur près de la corde.\nLe vent soufflait vers l’étendoir.\nVous n’avez pas vu le départ du feu."
+				}),
+				card("temoin", "Le jeune écuyer", "Témoin", {
+					facts:
+						"Vous avez aperçu un éclat avant la fumée.\nL’encens brûlait sous la fenêtre.\nVous n’avez pas vu d’où venait l’éclat."
+				}),
+				card("temoin", "L’apprenti de la forge", "Témoin", {
+					facts:
+						"Vous avez entendu un bruit avant de voir la fumée.\nUne dispute à propos de la corde avait eu lieu la veille.\nVous ne voyiez ni Brasier ni le départ du feu."
+				}),
+				card("temoin", "La marchande d’encens", "Témoin", {
+					facts:
+						"Vous avez vendu un bâton d’encens au voisin.\nL’encens se consume avec une petite flamme.\nVous n’étiez pas présente lors de l’incident."
+				}),
+				card("debrief", "Après l’audience", "Débrief", {
+					story:
+						"L’encens du voisin, poussé par le vent, a enflammé la corde. Brasier a éternué en sortant, sans viser personne.",
+					mechanisms:
+						"Une demande ignorée (déplacer la corde) a nourri la rancune. Le grondement a été pris pour une menace : biais de confirmation.",
+					ending: "Vérifier l’encens, déplacer la corde, discuter de la réparation."
+				})
+			]
+		},
+		{
+			id: "balai-sorcieres",
+			title: "Le balai des deux sorcières",
+			color: "#2f4f7a",
+			summary: "Deux sorcières revendiquent le même balai, retrouvé devant l’atelier de réparation.",
+			cards: [
+				card("affaire", "L’affaire du balai envolé", "Audience publique", {
+					content:
+						"Un balai sombre a été retrouvé dans le vestibule de l’atelier de réparation. Deux sorcières le réclament.",
+					accusation: "Mirelda accuse Séléné de vouloir garder le balai qu’elle a acheté.",
+					defense: "Séléné répond que c’est le sien, confié à l’artisan."
+				}),
+				juge(),
+				card("accusateur", "Mirelda, sorcière collectionneuse", "Accusateur", {
+					objective: "Récupérer le balai acheté au marché.",
+					facts:
+						"Votre facture décrit un modèle « Nuit-de-Chêne ».\nLe numéro de série figure sur votre reçu.\nVous avez acheté ce balai il y a trois jours."
+				}),
+				card("accuse", "Séléné, sorcière des marais", "Accusé", {
+					objective: "Retrouver votre balai et prouver qu’il est à vous.",
+					facts:
+						"Vous utilisez ce balai depuis des années.\nVous l’avez confié à l’artisan pour réparation.\nUne marque en forme de lune se trouve sous la poignée."
+				}),
+				card("temoin", "Toupin, apprenti réparateur", "Témoin", {
+					facts:
+						"Vous avez déplacé un balai vers le vestibule.\nDeux balais sombres étaient sur l’établi.\nVous n’avez pas vérifié à qui il appartenait."
+				}),
+				card("temoin", "Maître Chardon, artisan", "Témoin", {
+					facts:
+						"Vous avez reçu un balai de Séléné à réparer.\nLes deux balais ont des gravures différentes.\nVous n’avez assisté à aucun achat."
+				}),
+				card("temoin", "La vendeuse du marché", "Témoin", {
+					facts:
+						"Vous avez vendu un balai à Mirelda.\nPlusieurs balais du même modèle étaient en vente.\nVous ne reconnaissez pas le balai de l’atelier."
+				}),
+				card("temoin", "Le coursier de l’atelier", "Témoin", {
+					facts:
+						"Vous avez apporté des étiquettes à l’atelier.\nUne étiquette était décollée près de l’établi.\nVous n’avez pas vu qui a déplacé les balais."
+				}),
+				card("debrief", "Après l’audience", "Débrief", {
+					story:
+						"Deux balais semblables étaient à l’atelier. L’apprenti a déplacé celui de Séléné, que Mirelda a pris pour le sien.",
+					mechanisms:
+						"Aucun dépôt n’était étiqueté. Chacune a supposé la mauvaise foi de l’autre sans comparer les preuves : erreur d’attribution.",
+					ending: "Comparer gravure et facture, puis étiqueter chaque dépôt."
+				})
+			]
+		},
+		{
+			id: "fantome-chateau",
+			title: "Le fantôme trop bruyant",
+			color: "#3f6a4a",
+			summary: "Un fantôme est accusé de traverser volontairement les chambres du château la nuit.",
+			cards: [
+				card("affaire", "Les nuits agitées de Brumelune", "Audience publique", {
+					content:
+						"Depuis plusieurs nuits, des portes claquent et des pas résonnent dans les chambres du château.",
+					accusation: "Dame Pivoine accuse le fantôme Brumelune de vouloir effrayer les habitants.",
+					defense: "Brumelune assure qu’il ne veut effrayer personne."
+				}),
+				juge(),
+				card("accusateur", "Dame Pivoine, châtelaine", "Accusateur", {
+					objective: "Retrouver le calme pendant la nuit.",
+					facts:
+						"Trois portes ont claqué près de vos chambres.\nVous avez noté l’heure et le lieu de chaque bruit.\nLes bruits ont commencé après les travaux."
+				}),
+				card("accuse", "Brumelune, fantôme des galeries", "Accusé", {
+					objective: "Être cru : vous n’avez jamais voulu effrayer personne.",
+					facts:
+						"Depuis les travaux, vous vous perdez dans les couloirs.\nVotre ancien repère était une porte bleue.\nVous êtes passé dans les chambres en cherchant votre galerie."
+				}),
+				card("temoin", "Ronce, veilleur de nuit", "Témoin", {
+					facts:
+						"Vous avez guidé Brumelune, perdu à un embranchement.\nL’escalier a changé de place.\nVous n’avez observé qu’une seule nuit."
+				}),
+				card("temoin", "Lise, chambrière", "Témoin", {
+					facts:
+						"Vous avez vu Brumelune ressortir d’une chambre en s’excusant.\nIl cherchait l’ancienne galerie.\nVous ignorez ce qu’il voulait faire."
+				}),
+				card("temoin", "Le maître des travaux", "Témoin", {
+					facts:
+						"Vous avez dirigé les travaux du château.\nL’escalier a été déplacé et une porte repeinte.\nVous n’avez pas observé le fantôme la nuit."
+				}),
+				card("temoin", "Le jardinier du château", "Témoin", {
+					facts:
+						"Vous arrosiez la cour près de la galerie.\nVous avez entendu une porte claquer.\nVous n’avez pas vu qui traversait les chambres."
+				}),
+				card("debrief", "Après l’audience", "Débrief", {
+					story:
+						"Les travaux ont déplacé l’escalier et repeint la porte bleue. Brumelune, désorienté, errait de chambre en chambre.",
+					mechanisms:
+						"Les habitants ont accusé sans se parler : le bruit a été pris pour de l’intention. Personne n’a demandé à Brumelune ce qu’il cherchait.",
+					ending: "Baliser un trajet et réparer les portes bruyantes."
+				})
+			]
+		}
 	];
-	cases.forEach(item => { item.image = illustrations[Math.floor(Math.random() * illustrations.length)].src; });
-	window.TDC_DATA = { version: 1, illustrations, settings: {"gameName":"Le Tribunal du Chaos","subtitle":"Chroniques du royaume et conflits en audience","emblem":"⚖","backNote":"","accent":"#733b3b","fontStyle":"ornate","frameStyle":"double","ornament":"⚖","familyColors":{"affaire":"#733b3b","accusateur":"#644533","accuse":"#435c4b","temoin":"#435a67","faits":"#806a35","debrief":"#506145"}}, cases };
+
+	["dragon.svg", "sorcier.svg", "porte-fantasy.svg"].forEach((file, index) => {
+		cases[index].cards[0].image = "assets/illustrations/" + file;
+	});
+
+	window.TDC_DATA = {
+		version: 2,
+		settings,
+		cases,
+		uid,
+		illustrations: [
+			{ src: "assets/illustrations/dragon.svg", name: "Dragon" },
+			{ src: "assets/illustrations/sorcier.svg", name: "Sorcier" },
+			{ src: "assets/illustrations/chevalier.svg", name: "Chevalier en joute" },
+			{ src: "assets/illustrations/porte-fantasy.svg", name: "Porte fantasy" }
+		]
+	};
 })();

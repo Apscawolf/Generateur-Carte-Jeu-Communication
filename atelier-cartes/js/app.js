@@ -1,85 +1,186 @@
 (function () {
-	const TYPES = {
-		affaire: { label: "Affaire", fields: [["content", "Contexte public"], ["facts", "Faits connus"], ["interpretations", "Interprétations possibles"]] },
-		accusateur: { label: "Accusateur", fields: [["objective", "Objectif du joueur"], ["available", "Informations disponibles"], ["evidence", "Éléments qu’il peut présenter"], ["interpretation", "Interprétation personnelle"], ["unknown", "Ce qu’il ne connaît pas"]] },
-		accuse: { label: "Accusé", fields: [["objective", "Objectif du joueur"], ["content", "Version des événements"], ["available", "Informations disponibles"], ["evidence", "Éléments de défense"], ["unknown", "Ce qu’il ne connaît pas"]] },
-		temoin: { label: "Témoin", fields: [["content", "Version du témoin"], ["facts", "Faits directement observés"], ["indirect", "Informations indirectes"], ["interpretation", "Interprétations personnelles"], ["reliability", "Fiabilité du témoignage"]] },
-		faits: { label: "Faits & indices", fields: [["established", "Faits établis"], ["uncertain", "Éléments incertains"], ["questions", "Questions à vérifier"]] },
-		debrief: { label: "Débrief", fields: [["origin", "Origine du désaccord"], ["aggravating", "Facteurs aggravants"], ["bias", "Biais ou distorsions"], ["needs", "Besoins éventuellement menacés"], ["deescalation", "Pistes de désamorçage"], ["question", "Question finale"]] }
+	"use strict";
+
+	// ---------- Constantes du jeu ----------
+	const IMAGE_SIZE = { width: 1400, height: 600 }; // ratio 7:3, cadre des illustrations
+	const UPLOAD_DIR = "uploads/illustrations";
+	const IMAGE_PATH = /^(assets|uploads)\/illustrations\/[\w.-]+\.(svg|png|jpe?g|webp|gif)$/i;
+	const HEX = /^#[0-9a-f]{6}$/i;
+	const CARD_ORDER = ["affaire", "juge", "accusateur", "accuse", "temoin", "debrief"];
+	const REQUIRED_COUNT = { affaire: 1, juge: 1, accusateur: 1, accuse: 1, temoin: 4, debrief: 1 };
+	const SIDE_COPIES = 2; // exemplaires de chaque carte de côté
+	const SIDE_BACK_COLOR = "#3b3b44";
+	const CARD_LIMITS = { title: 48, role: 32, body: 650, bodyWithImage: 280 };
+	const FAMILY_COLORS = {
+		affaire: "#733b3b",
+		juge: "#5a4a82",
+		accusateur: "#3d6684",
+		accuse: "#8a4a2e",
+		temoin: "#3f6a4a",
+		debrief: "#806a35"
 	};
+	const BACK_LABELS = {
+		affaire: "Affaire",
+		juge: "Juge",
+		accusateur: "Accusateur",
+		accuse: "Accusé",
+		temoin: "Témoin",
+		debrief: "Débrief"
+	};
+	const ICONS = window.TDC_ICONS;
+	const BUILTIN = window.TDC_DATA.illustrations;
+
+	const TYPES = {
+		affaire: {
+			label: "Affaire",
+			fields: [
+				["content", "Contexte public", ""],
+				["accusation", "Reproche de l’accusateur", "Accusation"],
+				["defense", "Réponse de l’accusé", "Défense"]
+			]
+		},
+		juge: {
+			label: "Juge",
+			fields: [
+				["mission", "Mission du juge (maître du jeu)", "Mission"],
+				["steps", "Déroulé de la partie", "Déroulé"]
+			]
+		},
+		accusateur: {
+			label: "Accusateur",
+			fields: [
+				["objective", "Objectif (faire gagner l’accusation)", "Objectif"],
+				["facts", "Faits connus — ne jamais mentir dessus", "Faits"]
+			]
+		},
+		accuse: {
+			label: "Accusé",
+			fields: [
+				["objective", "Objectif (faire gagner la défense)", "Objectif"],
+				["facts", "Faits connus — ne jamais mentir dessus", "Faits"]
+			]
+		},
+		temoin: { label: "Témoin", fields: [["facts", "Faits connus — ne jamais mentir dessus", ""]] },
+		debrief: {
+			label: "Débrief",
+			fields: [
+				["story", "Version réelle de l’histoire", "Histoire"],
+				["mechanisms", "Mécanismes menant à cette issue", "Mécanismes"],
+				["ending", "Issue de l’affaire", "Issue"]
+			]
+		}
+	};
+
+	// Cartes tirées par les témoins pour connaître leur côté
+	const SIDE_CARDS = [
+		{
+			type: "accusateur",
+			title: "Côté de l’accusateur",
+			text: "Vous soutenez l’ACCUSATEUR.\n\nFaites-le gagner : ne mentez jamais sur les faits de votre carte, mais vous pouvez arranger vos opinions et vos sentiments, et taire ce qui le dessert."
+		},
+		{
+			type: "accuse",
+			title: "Côté de l’accusé",
+			text: "Vous soutenez l’ACCUSÉ.\n\nFaites-le gagner : ne mentez jamais sur les faits de votre carte, mais vous pouvez arranger vos opinions et vos sentiments, et taire ce qui le dessert."
+		}
+	];
+
+	// ---------- État ----------
 	const content = document.getElementById("app-content");
 	const title = document.getElementById("page-title");
-	const CORE_CARD_TYPES = ["affaire", "accuse", "accusateur", "debrief", "faits"];
-	const CARD_ORDER = ["affaire", "accuse", "accusateur", "temoin", "debrief", "faits"];
-	const CARD_LIMITS = { title: 48, role: 32, body: 650, bodyWithImage: 450 };
-	const BUILTIN_ILLUSTRATIONS = window.TDC_DATA.illustrations || [];
-	const isAllowedImage = image => !image || String(image).startsWith("data:image/") || BUILTIN_ILLUSTRATIONS.some(entry => entry.src === image);
 	const project = window.TDC_STORAGE.load(validateProject);
-	const ui = { view: "dashboard", caseId: project.cases[0] && project.cases[0].id, cardId: null, preview: "front", library: { search: "", type: "", caseId: "", role: "", concept: "", illustrated: false }, print: { caseId: "all", type: "", copies: 1, duplex: true, flip: false, selected: [] } };
+	const images = window.TDC_STORAGE.loadImages();
+	const ui = {
+		view: "dashboard",
+		caseId: project.cases[0] && project.cases[0].id,
+		cardId: null,
+		preview: "front",
+		library: { search: "", type: "", caseId: "" },
+		print: { caseId: "all", type: "", copies: 1, duplex: true, flip: false, sides: true, selected: [] }
+	};
 	let toastTimer;
-	const esc = value => String(value == null ? "" : value).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
-	const getCase = id => project.cases.find(item => item.id === id);
-	const getCard = id => project.cases.flatMap(item => item.cards).find(card => card.id === id);
-	const allCards = () => project.cases.flatMap(item => item.cards.map(card => ({ ...card, image: card.type === "affaire" ? (card.image || item.image) : "", caseId: item.id, caseTitle: item.title })));
-	const hasIllustration = card => !!(card && card.type === "affaire" && (card.image || project.cases.some(item => item.image && item.cards.some(entry => entry.id === card.id))));
-	const safeColor = (value, fallback) => /^#[0-9a-f]{6}$/i.test(value || "") ? value : fallback;
-	const familyColor = card => safeColor(project.settings.familyColors && project.settings.familyColors[card.type], "#846838");
-	const imagePosition = value => ["center", "top", "bottom", "left", "right"].includes(value) ? value : "center";
-	const frameStyle = () => project.settings.frameStyle === "simple" ? "simple" : "double";
-	function emblemMarkup(value, className) {
-		return `<span class="${className}">${esc(value || "⚖")}</span>`;
-	}
-	function applyTheme() {
-		document.documentElement.style.setProperty("--card-accent", safeColor(project.settings.accent, "#733b3b"));
-		document.documentElement.style.setProperty("--display", project.settings.fontStyle === "classic" ? "Georgia, serif" : '"Cinzel", Georgia, serif');
-	}
-	function applyEmblem() {
-		const sample = document.querySelector(".back-sample .emblem");
-		if (sample) sample.outerHTML = emblemMarkup(project.settings.emblem, "emblem");
-	}
-	function pedagogicalConcepts(card) {
-		return String(card.fields.bias || "").split(/[\n;,]/).map(value => value.trim().replace(/[.]$/, "")).filter(Boolean);
-	}
-	function cardLength(card) {
-		const body = Object.values(card.fields || {}).filter(Boolean).join("\n\n").length;
-		const illustrated = hasIllustration(card);
-		const bodyLimit = illustrated ? CARD_LIMITS.bodyWithImage : CARD_LIMITS.body;
-		const warnings = [];
-		if (String(card.title || "").length > CARD_LIMITS.title) warnings.push(`Titre : ${String(card.title).length}/${CARD_LIMITS.title} caractères.`);
-		if (String(card.role || "").length > CARD_LIMITS.role) warnings.push(`Rôle : ${String(card.role).length}/${CARD_LIMITS.role} caractères.`);
-		if (body > bodyLimit) warnings.push(`Texte : ${body}/${bodyLimit} caractères${illustrated ? " avec illustration" : ""}.`);
-		return { body, bodyLimit, warnings };
-	}
-	function lengthStatus(card) {
-		if (!card) return "";
-		const result = cardLength(card);
-		const summary = `Titre ${String(card.title || "").length}/${CARD_LIMITS.title} · rôle ${String(card.role || "").length}/${CARD_LIMITS.role} · texte ${result.body}/${result.bodyLimit}`;
-		return `<div id="card-length-status" class="length-status ${result.warnings.length ? "length-warning" : "length-ok"}" role="${result.warnings.length ? "alert" : "status"}">${result.warnings.length ? `⚠ À RACCOURCIR — ${result.warnings.join(" ")}` : `${summary} caractères — dans les limites conseillées.`}</div>`;
-	}
-	function oversizedCards() {
-		return allCards().map(card => ({ card, warnings: cardLength(card).warnings })).filter(entry => entry.warnings.length);
-	}
-	function refreshLengthWarnings() {
-		content.querySelectorAll(".card-list-item").forEach(button => {
-			const card = getCard(button.dataset.id), warnings = card && cardLength(card).warnings;
-			const badge = button.querySelector(".length-badge");
-			if (badge) badge.remove();
-			if (warnings && warnings.length) button.insertAdjacentHTML("beforeend", `<span class="length-badge">⚠ ${esc(warnings.join(" "))}</span>`);
+
+	// ---------- Utilitaires ----------
+	const esc = (value) =>
+		String(value == null ? "" : value).replace(
+			/[&<>"']/g,
+			(ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]
+		);
+	const uid = window.TDC_DATA.uid;
+	const getCase = (id) => project.cases.find((item) => item.id === id);
+	const getCard = (id) => project.cases.flatMap((item) => item.cards).find((card) => card.id === id);
+	const caseOf = (card) => project.cases.find((item) => item.cards.some((entry) => entry.id === card.id));
+	const allCards = () => project.cases.flatMap((item) => item.cards.map((card) => ({ card, item })));
+	const typeLabel = (type) => (TYPES[type] ? TYPES[type].label : "Carte");
+	const safeColor = (value, fallback) => (HEX.test(value || "") ? value : fallback);
+	const frameStyle = () => (project.settings.frameStyle === "simple" ? "simple" : "double");
+	const cardText = (card) =>
+		Object.values(card.fields || {})
+			.filter(Boolean)
+			.join("\n\n");
+	const imgTag = (path, className) =>
+		`<img class="${className}" src="${esc(path)}" data-path="${esc(path)}" alt="">`;
+
+	function validateProject(data) {
+		const fail = () => {
+			throw new Error("Format du grimoire non reconnu (version 2 attendue : 9 cartes par affaire).");
+		};
+		if (
+			!data ||
+			data.version !== 2 ||
+			!Array.isArray(data.cases) ||
+			!data.settings ||
+			typeof data.settings !== "object"
+		)
+			fail();
+		if (
+			data.uploads !== undefined &&
+			!(Array.isArray(data.uploads) && data.uploads.every((path) => IMAGE_PATH.test(path)))
+		)
+			fail();
+		const ids = new Set();
+		data.cases.forEach((item) => {
+			if (
+				!item ||
+				typeof item.id !== "string" ||
+				ids.has(item.id) ||
+				typeof item.title !== "string" ||
+				!HEX.test(item.color) ||
+				!Array.isArray(item.cards) ||
+				item.cards.length !== 9
+			)
+				fail();
+			ids.add(item.id);
+			Object.entries(REQUIRED_COUNT).forEach(([type, count]) => {
+				if (item.cards.filter((card) => card && card.type === type).length !== count) fail();
+			});
+			item.cards.forEach((card) => {
+				if (
+					!card ||
+					typeof card.id !== "string" ||
+					ids.has(card.id) ||
+					typeof card.title !== "string" ||
+					typeof card.role !== "string" ||
+					!card.fields ||
+					typeof card.fields !== "object" ||
+					Array.isArray(card.fields) ||
+					!Object.values(card.fields).every((v) => typeof v === "string")
+				)
+					fail();
+				if (card.image && (card.type !== "affaire" || !IMAGE_PATH.test(card.image))) fail();
+				ids.add(card.id);
+			});
 		});
-		const warnings = oversizedCards();
-		let alert = content.querySelector(".length-alert");
-		if (!warnings.length) { if (alert) alert.remove(); return; }
-		if (!alert) { alert = document.createElement("section"); alert.className = "length-alert"; alert.setAttribute("role", "alert"); content.prepend(alert); }
-		alert.innerHTML = `<strong>⚠ ${warnings.length} carte(s) à raccourcir avant impression</strong><ul>${warnings.slice(0, 5).map(entry => `<li><button data-action="edit-library-card" data-id="${esc(entry.card.id)}">${esc(entry.card.title || "Sans titre")}</button> — ${esc(entry.warnings.join(" "))}</li>`).join("")}</ul>${warnings.length > 5 ? `<p>Et ${warnings.length - 5} autre(s) carte(s).</p>` : ""}`;
+		data.uploads = data.uploads || [];
 	}
-	const countCards = () => project.cases.reduce((count, item) => count + item.cards.length, 0);
+
 	function notify(message, error) {
 		const node = document.getElementById("toast");
 		node.textContent = message;
 		node.style.background = error ? "#6c3430" : "";
 		node.classList.add("show");
 		clearTimeout(toastTimer);
-		toastTimer = setTimeout(() => node.classList.remove("show"), 3200);
+		toastTimer = setTimeout(() => node.classList.remove("show"), error ? 6000 : 3500);
 	}
 	function persist() {
 		try {
@@ -90,378 +191,798 @@
 			return false;
 		}
 	}
-	function typeLabel(type) { return TYPES[type] ? TYPES[type].label : "Carte"; }
-	function setView(view) {
-		ui.view = view;
-		document.querySelectorAll(".nav-link").forEach(button => button.classList.toggle("active", button.dataset.view === view));
-		const labels = { dashboard: "Bureau du greffier", cases: "Dossiers d’affaires", editor: "Édition de l’affaire", library: "Bibliothèque des cartes", customize: "Enluminures & dos", printing: "Imprimer les cartes" };
-		title.textContent = labels[view] || labels.dashboard;
-		render();
+	function applyTheme() {
+		document.documentElement.style.setProperty(
+			"--card-accent",
+			safeColor(project.settings.accent, "#733b3b")
+		);
+		document.documentElement.style.setProperty(
+			"--display",
+			project.settings.fontStyle === "classic" ? "Georgia, serif" : '"Cinzel", Georgia, serif'
+		);
+	}
+
+	// ---------- Longueur des textes ----------
+	function cardLength(card) {
+		const body = cardText(card).length;
+		const limit = card.image ? CARD_LIMITS.bodyWithImage : CARD_LIMITS.body;
+		const warnings = [];
+		if (card.title.length > CARD_LIMITS.title)
+			warnings.push(`Titre : ${card.title.length}/${CARD_LIMITS.title}.`);
+		if (card.role.length > CARD_LIMITS.role) warnings.push(`Rôle : ${card.role.length}/${CARD_LIMITS.role}.`);
+		if (body > limit) warnings.push(`Texte : ${body}/${limit}${card.image ? " avec illustration" : ""}.`);
+		return { body, limit, warnings };
+	}
+	function lengthStatus(card) {
+		const r = cardLength(card);
+		const summary = `Titre ${card.title.length}/${CARD_LIMITS.title} · rôle ${card.role.length}/${CARD_LIMITS.role} · texte ${r.body}/${r.limit}`;
+		return `<div id="card-length-status" class="length-status ${r.warnings.length ? "length-warning" : "length-ok"}" role="${r.warnings.length ? "alert" : "status"}">${r.warnings.length ? "⚠ À RACCOURCIR — " + esc(r.warnings.join(" ")) : esc(summary) + " — dans les limites."}</div>`;
+	}
+
+	// ---------- Cartes : recto et verso ----------
+	function frontBody(card) {
+		return TYPES[card.type].fields
+			.map(([key, , short]) => {
+				const value = (card.fields[key] || "").trim();
+				return value ? (short ? `<span class="sec">${esc(short)}</span>\n` : "") + esc(value) : "";
+			})
+			.filter(Boolean)
+			.join("\n\n");
+	}
+	// mode : "preview" (écran) ou "print" (impression) ; les classes CSS sont préfixées en conséquence.
+	// extra permet de remplacer le média et le texte (cartes de côté).
+	function frontMarkup(card, mode, extra) {
+		const print = mode === "print",
+			p = print ? "print-card" : "preview";
+		const frame = print ? "print-illustration-frame" : "illustration-frame";
+		let media = "";
+		if (extra) media = extra.media;
+		else if (card.type === "affaire" && card.image)
+			media = `<div class="${frame}">${imgTag(card.image, print ? "print-card-image" : "preview-image")}</div>`;
+		const body = extra ? esc(extra.text) : frontBody(card) || "Le texte de la carte apparaîtra ici.";
+		const inner = `<div class="${print ? "print-card-inner" : "card-preview-inner"} frame-${frameStyle()}" style="--family-color:${FAMILY_COLORS[card.type]}"><div class="card-ornament">⚖</div><div class="${p}-kind">${esc(typeLabel(card.type))}</div><div class="${p}-title">${esc(card.title || "Sans titre")}</div>${media}<div class="${print ? "print-card-content" : "preview-text"}${media && !extra ? " with-image" : ""}">${body}</div><div class="${p}-role">${esc(card.role || typeLabel(card.type))}</div></div>`;
+		return print ? `<div class="print-card">${inner}</div>` : `<div class="card-preview">${inner}</div>`;
+	}
+	function sideFrontMarkup(side, mode) {
+		const card = { type: side.type, title: side.title, role: "Carte de côté", image: "", fields: {} };
+		return frontMarkup(card, mode, {
+			media: `<div class="side-icon">${ICONS[side.type]}</div>`,
+			text: side.text
+		});
+	}
+	function backMarkup(type, color, mode) {
+		const label = type === "side" ? "Témoin" : BACK_LABELS[type];
+		const icon = ICONS[type === "side" ? "temoin" : type];
+		const face = `<div class="back-face" style="--back-color:${safeColor(color, "#3b3b44")}"><div class="back-inner"><span class="back-icon">${icon}</span><strong>${esc(label)}</strong><small>${esc(project.settings.gameName)}</small></div></div>`;
+		return mode === "print"
+			? `<div class="print-card print-card-back">${face}</div>`
+			: `<div class="card-preview preview-back">${face}</div>`;
+	}
+	function cardPreview(card, item) {
+		if (!card) return `<div class="empty-state">Choisissez une carte pour en voir l’aperçu.</div>`;
+		const warnings = cardLength(card).warnings.slice();
+		if (!card.title) warnings.push("Ajoutez un titre.");
+		const html =
+			ui.preview === "back" ? backMarkup(card.type, item.color, "preview") : frontMarkup(card, "preview");
+		return html + (warnings.length ? `<div class="preview-warning">${esc(warnings.join(" "))}</div>` : "");
+	}
+	function previewPanelHtml(card, item) {
+		return `<div><h3>Aperçu du sceau</h3>${cardPreview(card, item)}<div class="preview-switch">
+<button class="button button-small ${ui.preview === "front" ? "button-gold" : ""}" data-action="preview-side" data-side="front">Recto</button>
+<button class="button button-small ${ui.preview === "back" ? "button-gold" : ""}" data-action="preview-side" data-side="back">Verso</button>
+</div></div>`;
+	}
+
+	// ---------- Vues ----------
+	function isComplete(item) {
+		return item.cards.every((card) => card.title && Object.values(card.fields).some((v) => v.trim()));
 	}
 	function caseCard(item) {
-		const complete = item.cards.length === 9 && CORE_CARD_TYPES.every(type => item.cards.filter(card => card.type === type).length === 1) && item.cards.filter(card => card.type === "temoin").length === 4 && item.cards.every(card => card.title && Object.values(card.fields || {}).some(value => value.trim()));
-		return `<article class="case-card">${item.image ? `<img class="case-card-image" src="${esc(item.image)}" alt="">` : ""}<span class="type-label">Dossier ${esc(item.id.slice(0, 8))} · ${complete ? "dossier préparé" : "à compléter"}</span><h3>${esc(item.title)}</h3><p>${esc(item.summary || item.disagreement || "Aucun résumé pour le moment.")}</p><p class="case-meta">${item.cards.length} carte(s) · ${item.image ? "illustré" : "sans illustration"}</p><div class="case-actions"><button class="button button-small" data-action="open-case" data-id="${esc(item.id)}">Ouvrir le dossier</button><button class="button button-small" data-action="duplicate-case" data-id="${esc(item.id)}">Dupliquer</button><button class="button button-small button-danger" data-action="delete-case" data-id="${esc(item.id)}">Supprimer</button></div></article>`;
+		const art = (item.cards.find((card) => card.type === "affaire") || {}).image;
+		return `<article class="case-card" style="border-top:5px solid ${safeColor(item.color, "#733b3b")}">${art ? imgTag(art, "case-card-image") : ""}<span class="type-label">${isComplete(item) ? "dossier préparé" : "à compléter"}</span>
+<h3>${esc(item.title)}</h3><p>${esc(item.summary || "Aucun résumé pour le moment.")}</p>
+<p class="case-meta">${item.cards.length} cartes · ${art ? "illustré" : "sans illustration"}</p>
+<div class="case-actions">
+<button class="button button-small" data-action="open-case" data-id="${esc(item.id)}">Ouvrir le dossier</button>
+<button class="button button-small" data-action="duplicate-case" data-id="${esc(item.id)}">Dupliquer</button>
+<button class="button button-small button-danger" data-action="delete-case" data-id="${esc(item.id)}">Supprimer</button>
+</div></article>`;
 	}
 	function renderDashboard() {
-		return `<section class="hero"><div><span class="eyebrow">LES ARCHIVES DU ROYAUME</span><h2>Chaque conflit a plus d’une version.</h2><p>Composez des affaires, distribuez les informations et préparez les débats. Les dossiers restent ici, à l’abri des regards du royaume.</p></div><div class="hero-mark" aria-hidden="true">${emblemMarkup(project.settings.emblem, "balance-mark")}</div></section>
-      <div class="stat-grid"><div class="stat"><span class="stat-symbol">▤</span><div><strong>${project.cases.length}</strong><span>affaires au registre</span></div></div><div class="stat"><span class="stat-symbol">♧</span><div><strong>${countCards()}</strong><span>cartes consignées</span></div></div><div class="stat"><span class="stat-symbol">✥</span><div><strong>${project.cases.filter(item => item.cards.some(card => card.type === "debrief")).length}</strong><span>débriefs préparés</span></div></div></div>
-      <div class="section-heading"><div><h2>Affaires en cours</h2><p>Choisissez un dossier pour organiser les rôles et les indices.</p></div><button class="button button-gold" data-action="new-case">＋ Sceller une affaire</button></div>
-      <div class="case-grid">${project.cases.length ? project.cases.map(caseCard).join("") : `<div class="empty-state">Le registre est vierge. Ouvrez une nouvelle affaire pour commencer.</div>`}</div>
-      <hr class="ornament-rule"><div class="form-actions"><button class="button" data-view="library">Parcourir la bibliothèque</button><button class="button" data-view="printing">Préparer l’impression A4</button><button class="button button-danger" data-action="reset">Réinitialiser le grimoire</button></div>`;
+		const cards = project.cases.length * 9;
+		return `<section class="hero"><div><span class="eyebrow">LES ARCHIVES DU ROYAUME</span>
+<h2>Chaque conflit a plus d’une version.</h2>
+<p>Composez des affaires, distribuez les faits et préparez les débats. Les dossiers restent dans votre navigateur ; exportez-les pour les partager.</p>
+</div><div class="hero-mark" aria-hidden="true"><span class="balance-mark">⚖</span></div></section>
+		<div class="stat-grid"><div class="stat"><span class="stat-symbol">▤</span><div><strong>${project.cases.length}</strong><span>affaires au registre</span></div></div><div class="stat"><span class="stat-symbol">♧</span><div><strong>${cards}</strong><span>cartes consignées</span></div></div><div class="stat"><span class="stat-symbol">✥</span><div><strong>${project.cases.filter(isComplete).length}</strong><span>dossiers complets</span></div></div></div>
+		<div class="section-heading"><div><h2>Affaires en cours</h2><p>Une affaire = 9 cartes. Les 4 cartes de côté des témoins sont ajoutées à l’impression.</p></div><button class="button button-gold" data-action="new-case">＋ Sceller une affaire</button></div>
+		<div class="case-grid">${project.cases.length ? project.cases.map(caseCard).join("") : `<div class="empty-state">Le registre est vierge. Ouvrez une nouvelle affaire pour commencer.</div>`}</div>
+		<hr class="ornament-rule"><div class="form-actions">
+<button class="button" data-view="library">Parcourir la bibliothèque</button>
+<button class="button" data-view="printing">Préparer l’impression A4</button>
+<button class="button button-danger" data-action="reset">Réinitialiser le grimoire</button></div>`;
 	}
 	function renderCases() {
-		return `<div class="section-heading"><div><h2>Registre des affaires</h2><p>Dupliquez un dossier pour créer une variante sans toucher à l’original.</p></div><button class="button button-gold" data-action="new-case">＋ Nouvelle affaire</button></div><div class="case-grid">${project.cases.length ? project.cases.map(caseCard).join("") : `<div class="empty-state">Aucune affaire n’a été créée.</div>`}</div>`;
+		return `<div class="section-heading"><div><h2>Registre des affaires</h2>
+<p>Dupliquez un dossier pour créer une variante sans toucher à l’original.</p></div>
+<button class="button button-gold" data-action="new-case">＋ Nouvelle affaire</button></div>
+<div class="case-grid">${project.cases.length ? project.cases.map(caseCard).join("") : `<div class="empty-state">Aucune affaire n’a été créée.</div>`}</div>`;
 	}
-	function cardPreview(card) {
-		if (!card) return `<div class="empty-state">Choisissez une carte pour en voir l’aperçu.</div>`;
-		const settings = project.settings;
-		if (ui.preview === "back") return `<div class="card-preview"><div class="card-preview-inner preview-back"><div class="back-frame">${emblemMarkup(settings.emblem, "back-emblem")}<h3>${esc(settings.gameName)}</h3><p>${esc(settings.subtitle)}</p>${settings.backNote ? `<p>${esc(settings.backNote)}</p>` : ""}</div></div></div>`;
-		const data = Object.values(card.fields || {}).filter(Boolean).join("\n\n");
-		const length = cardLength(card);
-		const warnings = [...length.warnings];
-		if (!card.title) warnings.push("Ajoutez un titre.");
-		const parentCase = project.cases.find(item => item.cards.some(entry => entry.id === card.id));
-		const illustration = card.type === "affaire" ? (card.image || (parentCase && parentCase.image)) : "";
-		return `<div class="card-preview"><div class="card-preview-inner frame-${frameStyle()}" style="--family-color:${familyColor(card)}"><div class="card-ornament">${esc(project.settings.ornament || "⚖")}</div><div class="preview-kind">${esc(typeLabel(card.type))}</div><div class="preview-title">${esc(card.title || "Sans titre")}</div>${illustration ? `<div class="illustration-frame"><img class="preview-image" style="object-position:${imagePosition(card.imagePosition)}" src="${esc(illustration)}" alt=""></div>` : ""}<div class="preview-text">${esc(data || "Le texte de la carte apparaîtra ici.")}</div><div class="preview-role">${esc(card.role || typeLabel(card.type))}</div></div></div>${warnings.length ? `<div class="preview-warning">${warnings.map(esc).join(" ")}</div>` : ""}`;
+	function fieldControl(key, label, value) {
+		return `<div class="field full"><label for="field-${esc(key)}">${esc(label)}</label>
+<textarea id="field-${esc(key)}" name="field.${esc(key)}" rows="4">${esc(value || "")}</textarea>
+</div>`;
 	}
-	function fieldControl(key, label, value, full) {
-		const long = ["content", "available", "evidence", "unknown", "deescalation"].includes(key);
-		return `<div class="field ${full ? "full" : ""}"><label for="field-${esc(key)}">${esc(label)}</label><textarea id="field-${esc(key)}" name="field.${esc(key)}" class="${long ? "long" : ""}" rows="${long ? 4 : 3}">${esc(value || "")}</textarea></div>`;
+	function cardListHtml(item, active) {
+		return item.cards
+			.map(
+				(card) =>
+					`<button class="card-list-item ${active && card.id === active.id ? "active" : ""}" data-action="select-card" data-id="${esc(card.id)}"><strong>${esc(card.title || "Sans titre")}</strong><small>${esc(typeLabel(card.type))} · ${esc(card.role || "sans rôle")}</small>${cardLength(card).warnings.length ? `<span class="length-badge">⚠ à raccourcir</span>` : ""}</button>`
+			)
+			.join("");
+	}
+	function imageOptions(current) {
+		const known = [
+			...BUILTIN.map((entry) => [entry.src, entry.name]),
+			...project.uploads.map((path) => [path, "Importée : " + path.split("/").pop()])
+		];
+		return `<option value="">Aucune illustration</option>${known.map(([src, name]) => `<option value="${esc(src)}" ${src === current ? "selected" : ""}>${esc(name)}</option>`).join("")}`;
 	}
 	function renderEditor() {
 		const item = getCase(ui.caseId);
 		if (!item) return `<div class="empty-state">Choisissez ou créez une affaire dans le registre.</div>`;
-		let active = item.cards.find(card => card.id === ui.cardId);
-		if (!active && item.cards.length) active = item.cards[0];
-		if (active) ui.cardId = active.id;
-		const fields = active ? [...TYPES[active.type].fields, ...Object.keys(active.fields).filter(key => !TYPES[active.type].fields.some(field => field[0] === key)).map(key => [key, key])] : [];
-		const left = `<section class="panel"><h3>Jeu de 9 cartes</h3><p class="muted">1 affaire · 1 accusé · 1 accusateur · 4 témoins · 1 débrief · 1 carte faits</p><div class="card-list">${item.cards.map(card => `<button class="card-list-item ${active && card.id === active.id ? "active" : ""}" data-action="select-card" data-id="${esc(card.id)}"><strong>${esc(card.title || "Sans titre")}</strong><small>${esc(typeLabel(card.type))} · ${esc(card.role || "sans rôle")}</small></button>`).join("")}</div></section>`;
-		const caseForm = `<form id="case-form" class="panel"><h3>Identification de l’affaire</h3><div class="field-grid"><div class="field full"><label for="case-title">Titre de l’affaire</label><input id="case-title" name="case.title" value="${esc(item.title)}" required></div><div class="field full"><label for="case-summary">Résumé public</label><textarea id="case-summary" name="case.summary" rows="2">${esc(item.summary)}</textarea></div><div class="field full"><label for="case-context">Contexte commun</label><textarea id="case-context" name="case.context" rows="3">${esc(item.context)}</textarea></div><div class="field full"><label for="case-disagreement">Désaccord initial</label><textarea id="case-disagreement" name="case.disagreement" rows="3">${esc(item.disagreement)}</textarea></div><div class="field full"><label>Illustration de l’affaire</label><div class="image-control"><input type="file" accept="image/*" data-image-case="${esc(item.id)}">${item.image ? `<button type="button" class="button button-small button-danger" data-action="remove-case-image" data-id="${esc(item.id)}">Retirer</button>` : ""}</div></div></div><div class="form-actions"><button type="button" class="button button-small" data-action="duplicate-case" data-id="${esc(item.id)}">Dupliquer le dossier</button><button type="button" class="button button-small button-danger" data-action="delete-case" data-id="${esc(item.id)}">Supprimer l’affaire</button></div></form>`;
-		const affairImageControls = active && active.type === "affaire" ? `<div class="field"><label for="image-position">Position de l’illustration</label><select id="image-position" name="card.imagePosition">${["center", "top", "bottom", "left", "right"].map(position => `<option value="${position}" ${(active.imagePosition || "center") === position ? "selected" : ""}>${position === "center" ? "Centre" : position === "top" ? "Haut" : position === "bottom" ? "Bas" : position === "left" ? "Gauche" : "Droite"}</option>`).join("")}</select></div><div class="field"><label>Illustration de la carte</label><div class="image-control"><input type="file" accept="image/*" data-image-card="${esc(active.id)}">${active.image ? `<button type="button" class="button button-small button-danger" data-action="remove-card-image" data-id="${esc(active.id)}">Retirer l’image</button>` : ""}</div></div>` : "";
-		const cardForm = active ? `<form id="card-form" class="panel"><h3>Graver une carte</h3><p class="length-guide"></p><div class="field-grid"><div class="field full"><label>Famille de carte</label><span>${esc(typeLabel(active.type))} — dossier : ${esc(item.title)}</span></div><div class="field full"><label for="card-title">Titre</label><input id="card-title" name="card.title" value="${esc(active.title)}"></div><div class="field"><label for="card-role">Rôle ou catégorie</label><input id="card-role" name="card.role" value="${esc(active.role || "")}"></div>${fields.map((field, index) => fieldControl(field[0], field[1], active.fields[field[0]], index === fields.length - 1 && fields.length % 2 === 1)).join("")}${affairImageControls}</div>${lengthStatus(active)}</form>` : "";
-		const preview = `<section class="panel preview-panel"><div><h3>Aperçu du sceau</h3>${cardPreview(active)}<div class="preview-switch"><button class="button button-small ${ui.preview === "front" ? "button-gold" : ""}" data-action="preview-side" data-side="front">Recto</button><button class="button button-small ${ui.preview === "back" ? "button-gold" : ""}" data-action="preview-side" data-side="back">Verso</button></div></div></section>`;
-		return `<div class="section-heading"><div><h2>${esc(item.title)}</h2><p>Les informations confidentielles restent sur leur carte de rôle.</p></div><button class="button" data-view="cases">Retour aux affaires</button></div><div class="editor-layout">${left}<div style="display:grid;gap:14px">${caseForm}${cardForm}</div>${preview}</div>`;
+		let active = item.cards.find((card) => card.id === ui.cardId) || item.cards[0];
+		ui.cardId = active.id;
+		const left = `<section class="panel"><h3>Jeu de 9 cartes</h3>
+<p class="muted">1 affaire · 1 juge · 1 accusateur · 1 accusé · 4 témoins · 1 débrief</p>
+<div class="card-list">${cardListHtml(item, active)}</div></section>`;
+		const caseForm = `<form id="case-form" class="panel"><h3>Identification de l’affaire</h3>
+<div class="field-grid"><div class="field full"><label for="case-title">Titre de l’affaire</label>
+<input id="case-title" name="case.title" value="${esc(item.title)}" required></div>
+<div class="field full"><label for="case-summary">Résumé</label>
+<textarea id="case-summary" name="case.summary" rows="2">${esc(item.summary)}</textarea></div>
+<div class="field full"><label for="case-color">Couleur du dos des cartes de cette affaire</label>
+<input id="case-color" type="color" name="case.color" value="${esc(safeColor(item.color, "#733b3b"))}">
+</div></div><div class="form-actions">
+<button type="button" class="button button-small" data-action="duplicate-case" data-id="${esc(item.id)}">Dupliquer le dossier</button>
+<button type="button" class="button button-small button-danger" data-action="delete-case" data-id="${esc(item.id)}">Supprimer le dossier</button>
+</div></form>`;
+		const imageControls =
+			active.type === "affaire"
+				? `<div class="field full"><label for="card-image">Illustration (cadre 7:3, voir README)</label>
+<div class="image-control">
+<select id="card-image" name="card.image">${imageOptions(active.image)}</select>
+<input type="file" accept="image/*" data-image-card="${esc(active.id)}" aria-label="Importer une image">
+</div></div>`
+				: "";
+		const cardForm = `<form id="card-form" class="panel">
+<h3>Graver une carte</h3>${lengthStatus(active)}<div class="field-grid"><div class="field full">
+<label>Famille de carte</label>
+<span>${esc(typeLabel(active.type))} — dossier : ${esc(item.title)}</span></div><div class="field">
+<label for="card-title">Titre</label>
+<input id="card-title" name="card.title" value="${esc(active.title)}"></div><div class="field">
+<label for="card-role">Rôle ou catégorie</label>
+<input id="card-role" name="card.role" value="${esc(active.role)}">
+</div>${TYPES[active.type].fields.map(([key, label]) => fieldControl(key, label, active.fields[key])).join("")}${imageControls}</div>
+</form>`;
+		return `<div class="section-heading"><div><h2>${esc(item.title)}</h2>
+<p>Les cartes ne contiennent que des faits : les opinions et sentiments sont libres.</p></div>
+<button class="button" data-view="cases">Retour aux affaires</button></div>
+<div class="editor-layout">${left}<div style="display:grid;gap:14px">${caseForm}${cardForm}</div>
+<section class="panel preview-panel">${previewPanelHtml(active, item)}</section></div>`;
 	}
 	function renderLibrary() {
-		let cards = allCards();
-		const filter = ui.library;
-		if (filter.search) cards = cards.filter(card => (card.title + " " + card.role + " " + Object.values(card.fields || {}).join(" ") + " " + card.caseTitle).toLowerCase().includes(filter.search.toLowerCase()));
-		if (filter.type) cards = cards.filter(card => card.type === filter.type);
-		if (filter.caseId) cards = cards.filter(card => card.caseId === filter.caseId);
-		if (filter.illustrated) cards = cards.filter(hasIllustration);
-		if (filter.role) cards = cards.filter(card => card.role === filter.role);
-		if (filter.concept) cards = cards.filter(card => pedagogicalConcepts(card).includes(filter.concept));
-		const roles = [...new Set(allCards().map(card => card.role).filter(Boolean))].sort();
-		const concepts = [...new Set(allCards().flatMap(pedagogicalConcepts))].sort();
-		return `<div class="section-heading"><div><h2>Bibliothèque des cartes</h2><p>${cards.length} résultat(s) · recherche dans les titres, rôles et textes.</p></div></div>
-      <div class="toolbar"><div class="toolbar-control"><label for="lib-search">Recherche</label><input id="lib-search" value="${esc(filter.search)}" placeholder="Un personnage, une notion…"></div><div class="toolbar-control"><label for="lib-type">Type</label><select id="lib-type"><option value="">Tous les types</option>${Object.entries(TYPES).map(([key, value]) => `<option value="${key}" ${filter.type === key ? "selected" : ""}>${esc(value.label)}</option>`).join("")}</select></div><div class="toolbar-control"><label for="lib-case">Affaire</label><select id="lib-case"><option value="">Toutes les affaires</option>${project.cases.map(item => `<option value="${esc(item.id)}" ${filter.caseId === item.id ? "selected" : ""}>${esc(item.title)}</option>`).join("")}</select></div><div class="toolbar-control"><label for="lib-role">Rôle</label><select id="lib-role"><option value="">Tous les rôles</option>${roles.map(role => `<option value="${esc(role)}" ${filter.role === role ? "selected" : ""}>${esc(role)}</option>`).join("")}</select></div><div class="toolbar-control"><label for="lib-concept">Notion pédagogique</label><select id="lib-concept"><option value="">Toutes les notions</option>${concepts.map(concept => `<option value="${esc(concept)}" ${filter.concept === concept ? "selected" : ""}>${esc(concept)}</option>`).join("")}</select></div><label><input id="lib-illustrated" type="checkbox" ${filter.illustrated ? "checked" : ""}> Illustrées uniquement</label></div>
-      <div class="library-list">${cards.map(card => `<article class="library-row"><div><h3>${esc(card.title || "Sans titre")} <span class="type-label">· ${esc(typeLabel(card.type))}</span></h3><p>${esc(card.caseTitle)} · ${esc(card.role || "sans rôle")}${card.image ? " · illustration" : ""}</p></div><span>${esc((Object.values(card.fields || {}).find(Boolean) || "").slice(0, 85))}</span><div class="row-actions"><button class="button button-small" data-action="edit-library-card" data-id="${esc(card.id)}">Modifier</button><button class="button button-small" data-action="print-one" data-id="${esc(card.id)}">Imprimer</button></div></article>`).join("") || `<div class="empty-state">Aucune carte ne correspond aux filtres.</div>`}</div>`;
+		const f = ui.library,
+			q = f.search.toLowerCase();
+		const cards = allCards().filter(
+			({ card, item }) =>
+				(!q || `${card.title} ${card.role} ${cardText(card)} ${item.title}`.toLowerCase().includes(q)) &&
+				(!f.type || card.type === f.type) &&
+				(!f.caseId || item.id === f.caseId)
+		);
+		return `<div class="section-heading"><div><h2>Bibliothèque des cartes</h2>
+<p>${cards.length} résultat(s) · recherche dans les titres, rôles et textes.</p></div></div>
+		<div class="toolbar"><div class="toolbar-control"><label for="lib-search">Recherche</label><input id="lib-search" value="${esc(f.search)}" placeholder="Un personnage, un fait…"></div><div class="toolbar-control"><label for="lib-type">Type</label><select id="lib-type"><option value="">Tous les types</option>${Object.entries(
+			TYPES
+		)
+			.map(
+				([key, value]) =>
+					`<option value="${key}" ${f.type === key ? "selected" : ""}>${esc(value.label)}</option>`
+			)
+			.join("")}</select></div><div class="toolbar-control"><label for="lib-case">Affaire</label>
+<select id="lib-case">
+<option value="">Toutes les affaires</option>${project.cases.map((item) => `<option value="${esc(item.id)}" ${f.caseId === item.id ? "selected" : ""}>${esc(item.title)}</option>`).join("")}</select>
+</div></div>
+		<div class="library-list">${
+			cards
+				.map(
+					({ card, item }) => `<article class="library-row"><div>
+<h3>${esc(card.title || "Sans titre")} <span class="type-label">· ${esc(typeLabel(card.type))}</span>
+</h3><p>${esc(item.title)} · ${esc(card.role || "sans rôle")}</p></div>
+<span>${esc((Object.values(card.fields).find(Boolean) || "").slice(0, 85))}</span>
+<div class="row-actions">
+<button class="button button-small" data-action="edit-library-card" data-id="${esc(card.id)}">Modifier</button>
+<button class="button button-small" data-action="print-one" data-id="${esc(card.id)}">Imprimer</button>
+</div>
+</article>`
+				)
+				.join("") || `<div class="empty-state">Aucune carte ne correspond aux filtres.</div>`
+		}</div>`;
+	}
+	function backGallery() {
+		const specimens = CARD_ORDER.map(
+			(type) =>
+				`<figure>${backMarkup(type, safeColor((project.cases[0] || {}).color, "#733b3b"), "preview")}<figcaption>${esc(BACK_LABELS[type])}</figcaption></figure>`
+		).join("");
+		return `${specimens}<figure>${backMarkup("side", SIDE_BACK_COLOR, "preview")}<figcaption>Cartes de côté</figcaption></figure>`;
 	}
 	function renderCustomize() {
-		const settings = project.settings;
-		return `<div class="section-heading"><div><h2>Enluminures &amp; dos de cartes</h2><p>Les changements de verso s’appliquent à toutes les familles.</p></div></div>
-      <div class="customize-layout">
-        <form id="settings-form" class="panel"><h3>Identité du jeu</h3><div class="field-grid">
-          <div class="field full"><label for="game-name">Nom du jeu</label><input id="game-name" name="settings.gameName" value="${esc(settings.gameName)}"></div>
-          <div class="field full"><label for="subtitle">Sous-titre du verso</label><input id="subtitle" name="settings.subtitle" value="${esc(settings.subtitle)}"></div>
-          <div class="field"><label for="emblem">Emblème central</label><select id="emblem" name="settings.emblem"><option value="⚖" ${settings.emblem === "⚖" ? "selected" : ""}>Balance de justice</option><option value="✦" ${settings.emblem === "✦" ? "selected" : ""}>Étoile</option><option value="❧" ${settings.emblem === "❧" ? "selected" : ""}>Feuille</option></select></div>
-          <div class="field"><label for="back-note">Mention facultative</label><input id="back-note" name="settings.backNote" value="${esc(settings.backNote)}"></div>
-          <div class="field"><label for="accent">Couleur de l’ornement</label><input id="accent" type="color" name="settings.accent" value="${esc(settings.accent)}"></div>
-          <div class="field"><label for="ornament">Ornement de recto</label><select id="ornament" name="settings.ornament">${["✦", "❧", "⚖", "✧"].map(mark => `<option value="${mark}" ${(settings.ornament || "✦") === mark ? "selected" : ""}>${mark}</option>`).join("")}</select></div>
-          <div class="field"><label for="frame-style">Cadre</label><select id="frame-style" name="settings.frameStyle"><option value="double" ${frameStyle() === "double" ? "selected" : ""}>Double enluminure</option><option value="simple" ${frameStyle() === "simple" ? "selected" : ""}>Filet simple</option></select></div>
-          <div class="field"><label for="font-style">Typographie des titres</label><select id="font-style" name="settings.fontStyle"><option value="ornate" ${settings.fontStyle !== "classic" ? "selected" : ""}>Gothique enluminée</option><option value="classic" ${settings.fontStyle === "classic" ? "selected" : ""}>Livre ancien</option></select></div>
-          <div class="field full"><label>Couleurs des familles</label><div class="field-grid">${Object.entries(TYPES).map(([key, value]) => `<div class="field"><label for="color-${key}">${esc(value.label)}</label><input id="color-${key}" type="color" name="familyColor.${key}" value="${safeColor(settings.familyColors && settings.familyColors[key], "#846838")}"></div>`).join("")}</div></div>
-        </div><p class="muted">Les illustrations importées restent intégrées au projet JSON exporté. Les polices décoratives en ligne sont facultatives ; des polices système lisibles prennent le relais hors connexion. Le format physique reste fixé à 70 × 99 mm pour l’alignement A4.</p></form>
-        <section class="panel"><h3>Verso commun</h3><div class="back-sample"><span class="emblem">${esc(settings.emblem)}</span><h3>${esc(settings.gameName)}</h3><p>${esc(settings.subtitle)}</p>${settings.backNote ? `<p>${esc(settings.backNote)}</p>` : ""}</div><p class="muted">Format de carte : 70 × 99 mm · A4 : 3 × 3.</p></section>
-      </div>`;
+		const s = project.settings;
+		return `<div class="section-heading"><div><h2>Enluminures &amp; dos de cartes</h2>
+<p>Une couleur de dos par affaire (réglable dans le dossier) et un logo par famille de carte.</p></div>
+</div>
+		<div class="customize-layout"><div style="display:grid;gap:14px"><form id="settings-form" class="panel"><h3>Identité du jeu</h3><div class="field-grid">
+			<div class="field full"><label for="game-name">Nom du jeu</label><input id="game-name" name="settings.gameName" value="${esc(s.gameName)}"></div>
+			<div class="field full"><label for="subtitle">Sous-titre</label><input id="subtitle" name="settings.subtitle" value="${esc(s.subtitle)}"></div>
+			<div class="field"><label for="accent">Couleur des ornements</label><input id="accent" type="color" name="settings.accent" value="${esc(safeColor(s.accent, "#733b3b"))}"></div>
+			<div class="field"><label for="frame-style">Cadre</label><select id="frame-style" name="settings.frameStyle"><option value="double" ${frameStyle() === "double" ? "selected" : ""}>Double enluminure</option><option value="simple" ${frameStyle() === "simple" ? "selected" : ""}>Filet simple</option></select></div>
+			<div class="field"><label for="font-style">Typographie des titres</label><select id="font-style" name="settings.fontStyle"><option value="ornate" ${s.fontStyle !== "classic" ? "selected" : ""}>Gothique enluminée</option><option value="classic" ${s.fontStyle === "classic" ? "selected" : ""}>Livre ancien</option></select></div>
+		</div><p class="muted">Format physique : 70 × 99 mm, 9 cartes par feuille A4.</p></form>
+</div>
+		<section class="panel"><h3>Les dos des cartes</h3><div class="back-gallery">${backGallery()}</div></section></div>`;
 	}
-	function printCardMarkup(card, side, flip, caseImage) {
-		if (side === "back") return `<div class="print-card print-card-back ${flip ? "flip-back" : ""}"><div class="print-card-inner">${emblemMarkup(project.settings.emblem, "print-back-emblem")}<div class="print-back-name">${esc(project.settings.gameName)}</div><div class="print-back-subtitle">${esc(project.settings.subtitle)}</div>${project.settings.backNote ? `<div class="print-back-note">${esc(project.settings.backNote)}</div>` : ""}</div></div>`;
-		if (!card) return `<div class="print-card print-blank"></div>`;
-		const text = Object.values(card.fields || {}).filter(Boolean).join("\n\n");
-		const illustration = card.type === "affaire" ? (card.image || caseImage) : "";
-		return `<div class="print-card"><div class="print-card-inner frame-${frameStyle()}" style="--family-color:${familyColor(card)}"><div class="card-ornament">${esc(project.settings.ornament || "⚖")}</div><div class="print-card-kind">${esc(typeLabel(card.type))}</div><div class="print-card-title">${esc(card.title || "Sans titre")}</div>${illustration ? `<div class="print-illustration-frame"><img class="print-card-image" style="object-position:${imagePosition(card.imagePosition)}" src="${esc(illustration)}" alt=""></div>` : ""}<div class="print-card-content">${esc(text)}</div><div class="print-card-role">${esc(card.role || typeLabel(card.type))}</div></div></div>`;
-	}
-	function printPages(groups, duplex, flip) {
-		const pages = [];
-		groups.forEach(group => {
-			pages.push(`<section class="print-sheet">${group.slots.map(card => printCardMarkup(card, "front", false, group.caseImage)).join("")}</section>`);
-			if (duplex) pages.push(`<section class="print-sheet">${Array.from({ length: 9 }, (_, i) => { const row = Math.floor(i / 3), column = i % 3, source = flip ? row * 3 + (2 - column) : i; return printCardMarkup(group.slots[source], "back", false, group.caseImage); }).join("")}</section>`);
-		});
-		return pages.join("");
-	}
-	function filteredPrintGroups() {
-		const options = ui.print;
-		const chosenCases = project.cases.filter(item => !options.caseId || options.caseId === "all" || item.id === options.caseId);
-		const groups = [];
-		chosenCases.forEach(item => {
-			const sorted = item.cards.slice().sort((a, b) => {
-				return CARD_ORDER.indexOf(a.type) - CARD_ORDER.indexOf(b.type);
+
+	// ---------- Impression ----------
+	function caseSlots(item) {
+		const o = ui.print;
+		const slots = Array(9).fill(null);
+		item.cards
+			.slice()
+			.sort((a, b) => CARD_ORDER.indexOf(a.type) - CARD_ORDER.indexOf(b.type))
+			.forEach((card, index) => {
+				if ((!o.selected.length || o.selected.includes(card.id)) && (!o.type || card.type === o.type))
+					slots[index] = { kind: "card", card, color: item.color };
 			});
+		return slots;
+	}
+	function printGroups() {
+		const o = ui.print,
+			groups = [];
+		project.cases
+			.filter((item) => o.caseId === "all" || item.id === o.caseId)
+			.forEach((item) => {
+				const slots = caseSlots(item);
+				if (!slots.some(Boolean)) return;
+				for (let copy = 0; copy < o.copies; copy++) groups.push({ title: item.title, slots });
+			});
+		if (o.sides && !o.selected.length && !o.type) {
 			const slots = Array(9).fill(null);
-			sorted.forEach((card, index) => {
-				const selected = !options.selected.length || options.selected.includes(card.id);
-				const typeMatches = !options.type || card.type === options.type;
-				if (selected && typeMatches && index < slots.length) slots[index] = card;
+			SIDE_CARDS.forEach((side, s) => {
+				for (let n = 0; n < SIDE_COPIES; n++) slots[s * SIDE_COPIES + n] = { kind: "side", side };
 			});
-			if (!slots.some(Boolean)) return;
-			for (let copy = 0; copy < options.copies; copy++) groups.push({ caseId: item.id, title: item.title, caseImage: item.image, slots: slots.slice() });
-		});
+			groups.push({ title: "Cartes de côté des témoins", slots });
+		}
 		return groups;
 	}
-	function renderPrinting() {
-		const options = ui.print;
-		const groups = filteredPrintGroups();
-		const pageCount = groups.length * (options.duplex ? 2 : 1);
-		const pages = printPages(groups, options.duplex, options.flip);
-		return `<div class="section-heading"><div><h2>Impression au format du jeu</h2><p>Une affaire par feuille A4 · 9 emplacements de 70 × 99 mm. Les filtres laissent les autres emplacements vierges.</p></div><button class="button button-gold" data-action="do-print">Imprimer / Exporter PDF</button></div>
-      <div class="toolbar"><div class="toolbar-control"><label for="print-case">Affaire</label><select id="print-case"><option value="all" ${options.caseId === "all" ? "selected" : ""}>Toutes les affaires</option>${project.cases.map(item => `<option value="${esc(item.id)}" ${options.caseId === item.id ? "selected" : ""}>${esc(item.title)}</option>`).join("")}</select></div><div class="toolbar-control"><label for="print-type">Famille de cartes</label><select id="print-type"><option value="">Toutes les cartes</option>${Object.entries(TYPES).map(([key, value]) => `<option value="${key}" ${options.type === key ? "selected" : ""}>${esc(value.label)}</option>`).join("")}</select></div><div class="toolbar-control"><label for="print-copies">Exemplaires de chaque affaire</label><input type="number" id="print-copies" min="1" max="30" value="${options.copies}"></div><label><input id="print-duplex" type="checkbox" ${options.duplex ? "checked" : ""}> Générer les versos</label><label><input id="print-flip" type="checkbox" ${options.flip ? "checked" : ""}> Retourner horizontalement les versos</label></div>
-      <details class="panel"><summary>Sélectionner des cartes précises (facultatif)</summary><div class="select-cards">${allCards().map(card => `<label><input type="checkbox" data-print-card="${esc(card.id)}" ${options.selected.includes(card.id) ? "checked" : ""}> ${esc(card.title)} <span class="muted">· ${esc(typeLabel(card.type))}</span></label>`).join("")}</div><button class="button button-small" data-action="clear-print-selection">Effacer la sélection</button></details>
-      <div class="section-heading"><div><h2>Aperçu des feuilles</h2><p>${groups.length} affaire(s) · ${pageCount} page(s) ${options.duplex ? "(recto puis verso pour chaque affaire)" : "(rectos seulement)"}</p></div><span class="type-label">A4 · 210 × 297 mm</span></div>
-      <div class="print-preview">${groups.length ? groups.map(group => `<div><div class="sheet-caption">${esc(group.title)} · recto</div><div class="sheet-preview">${group.slots.map(card => card ? `<div class="mini-card"><strong>${esc(card.title)}</strong><small>${esc(typeLabel(card.type))}</small></div>` : `<div class="mini-card mini-blank"></div>`).join("")}</div>${options.duplex ? `<div class="sheet-caption">Verso correspondant</div><div class="sheet-preview">${Array.from({ length: 9 }, (_, i) => { const source = options.flip ? Math.floor(i / 3) * 3 + (2 - i % 3) : i; return group.slots[source] ? `<div class="mini-card back-mini">${emblemMarkup(project.settings.emblem, "mini-back-emblem")}</div>` : `<div class="mini-card mini-blank"></div>`; }).join("")}</div>` : ""}</div>`).join("") : `<div class="empty-state">Aucune carte à imprimer avec ces critères.</div>`}</div><div id="print-output">${pages}</div>`;
+	const mirrored = (slots, flip) =>
+		Array.from({ length: 9 }, (_, i) => slots[flip ? Math.floor(i / 3) * 3 + (2 - (i % 3)) : i]);
+	function slotFront(slot) {
+		if (!slot) return `<div class="print-card print-blank"></div>`;
+		return slot.kind === "side" ? sideFrontMarkup(slot.side, "print") : frontMarkup(slot.card, "print");
 	}
+	function slotBack(slot) {
+		if (!slot) return `<div class="print-card print-blank"></div>`;
+		return slot.kind === "side"
+			? backMarkup("side", SIDE_BACK_COLOR, "print")
+			: backMarkup(slot.card.type, slot.color, "print");
+	}
+	function printPages(groups) {
+		return groups
+			.map(
+				(group) =>
+					`<section class="print-sheet">${group.slots.map(slotFront).join("")}</section>${ui.print.duplex ? `<section class="print-sheet">${mirrored(group.slots, ui.print.flip).map(slotBack).join("")}</section>` : ""}`
+			)
+			.join("");
+	}
+	function miniBack(slot) {
+		if (!slot) return `<div class="mini-card mini-blank"></div>`;
+		const type = slot.kind === "side" ? "temoin" : slot.card.type;
+		return `<div class="mini-card back-mini" style="--back-color:${slot.kind === "side" ? SIDE_BACK_COLOR : safeColor(slot.color, "#3b3b44")}"><span class="mini-icon">${ICONS[type]}</span></div>`;
+	}
+	function renderPrinting() {
+		const o = ui.print,
+			groups = printGroups();
+		const label = (slot) =>
+			slot.kind === "side"
+				? [slot.side.title, "Carte de côté"]
+				: [slot.card.title, typeLabel(slot.card.type)];
+		const mini = (slot) =>
+			slot
+				? `<div class="mini-card"><strong>${esc(label(slot)[0])}</strong><small>${esc(label(slot)[1])}</small></div>`
+				: `<div class="mini-card mini-blank"></div>`;
+		return `<div class="section-heading"><div><h2>Impression au format du jeu</h2>
+<p>Une affaire par feuille A4 (9 cartes de 70 × 99 mm), puis une feuille pour les 4 cartes de côté des témoins.</p>
+</div><button class="button button-gold" data-action="do-print">Imprimer / Exporter PDF</button></div>
+		<div class="toolbar"><div class="toolbar-control"><label for="print-case">Affaire</label>
+<select id="print-case">
+<option value="all" ${o.caseId === "all" ? "selected" : ""}>Toutes les affaires</option>${project.cases.map((item) => `<option value="${esc(item.id)}" ${o.caseId === item.id ? "selected" : ""}>${esc(item.title)}</option>`).join("")}</select>
+</div><div class="toolbar-control"><label for="print-type">Famille de cartes</label>
+<select id="print-type"><option value="">Toutes les cartes</option>${Object.entries(TYPES)
+			.map(
+				([key, value]) =>
+					`<option value="${key}" ${o.type === key ? "selected" : ""}>${esc(value.label)}</option>`
+			)
+			.join(
+				""
+			)}</select></div><div class="toolbar-control"><label for="print-copies">Exemplaires de chaque affaire</label><input type="number" id="print-copies" min="1" max="30" value="${o.copies}"></div><label><input id="print-sides" type="checkbox" ${o.sides ? "checked" : ""}> Ajouter les cartes de côté</label><label><input id="print-duplex" type="checkbox" ${o.duplex ? "checked" : ""}> Générer les versos</label><label><input id="print-flip" type="checkbox" ${o.flip ? "checked" : ""}> Retourner horizontalement les versos</label></div>
+		<details class="panel"><summary>Sélectionner des cartes précises (facultatif)</summary><div class="select-cards">${allCards()
+			.map(
+				({ card }) =>
+					`<label><input type="checkbox" data-print-card="${esc(card.id)}" ${o.selected.includes(card.id) ? "checked" : ""}> ${esc(card.title)} <span class="muted">· ${esc(typeLabel(card.type))}</span></label>`
+			)
+			.join(
+				""
+			)}</div><button class="button button-small" data-action="clear-print-selection">Effacer la sélection</button></details>
+		<div class="section-heading"><div><h2>Aperçu des feuilles</h2><p>${groups.length} feuille(s) de cartes · ${groups.length * (o.duplex ? 2 : 1)} page(s)</p></div><span class="type-label">A4 · 210 × 297 mm</span></div>
+		<div class="print-preview">${
+			groups.length
+				? groups
+						.map(
+							(group) => `<div>
+<div class="sheet-caption">${esc(group.title)} · recto</div>
+<div class="sheet-preview">${group.slots.map(mini).join("")}</div>${
+								o.duplex
+									? `<div class="sheet-caption">Verso correspondant</div>
+<div class="sheet-preview">${mirrored(group.slots, o.flip).map(miniBack).join("")}</div>`
+									: ""
+							}</div>`
+						)
+						.join("")
+				: `<div class="empty-state">Aucune carte à imprimer avec ces critères.</div>`
+		}</div>
+<div id="print-output">${printPages(groups)}</div>`;
+	}
+
+	// ---------- Navigation ----------
 	function render() {
 		applyTheme();
-		const renderers = { dashboard: renderDashboard, cases: renderCases, editor: renderEditor, library: renderLibrary, customize: renderCustomize, printing: renderPrinting };
+		const renderers = {
+			dashboard: renderDashboard,
+			cases: renderCases,
+			editor: renderEditor,
+			library: renderLibrary,
+			customize: renderCustomize,
+			printing: renderPrinting
+		};
 		content.innerHTML = (renderers[ui.view] || renderDashboard)();
-		const lengthGuide = content.querySelector(".length-guide"), activeCard = ui.cardId && getCard(ui.cardId);
-		if (lengthGuide && activeCard) lengthGuide.textContent = `Limites conseillées : titre ${CARD_LIMITS.title}, rôle ${CARD_LIMITS.role}, texte ${cardLength(activeCard).bodyLimit} caractères par carte. Les dépassements ne sont pas coupés, mais signalés.`;
-		const lengthStatusNode = content.querySelector("#card-length-status"), fields = content.querySelector("#card-form .field-grid");
-		if (lengthStatusNode && fields) content.querySelector("#card-form").insertBefore(lengthStatusNode, fields);
-		if (ui.view !== "printing") refreshLengthWarnings();
-		applyEmblem();
-		const printOutput = document.getElementById("print-output");
-		if (printOutput) printOutput.classList.toggle("hidden", ui.view !== "printing");
+		const out = document.getElementById("print-output");
+		if (out) out.classList.toggle("hidden", ui.view !== "printing");
 	}
-	function blankCard(type, title, role) {
-		return { id: crypto.randomUUID(), type, title, role, image: "", fields: {} };
+	function setView(view) {
+		ui.view = view;
+		document
+			.querySelectorAll(".nav-link")
+			.forEach((button) =>
+				button.classList.toggle("active", button.dataset.view === (view === "editor" ? "cases" : view))
+			);
+		const labels = {
+			dashboard: "Bureau du greffier",
+			cases: "Dossiers d’affaires",
+			editor: "Édition de l’affaire",
+			library: "Bibliothèque des cartes",
+			customize: "Enluminures & dos",
+			printing: "Imprimer les cartes"
+		};
+		title.textContent = labels[view] || labels.dashboard;
+		render();
+	}
+
+	// ---------- Affaires ----------
+	// Couleur de dos unique par affaire : teintes espacées de l'angle d'or (137,5°), donc jamais deux fois la même
+	// teinte proche, même avec des dizaines d'affaires ; la luminosité alterne pour distinguer davantage.
+	function hslToHex(h, s, l) {
+		s /= 100;
+		l /= 100;
+		const k = (n) => (n + h / 30) % 12,
+			f = (n) => l - s * Math.min(l, 1 - l) * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+		return (
+			"#" +
+			[f(0), f(8), f(4)]
+				.map((x) =>
+					Math.round(x * 255)
+						.toString(16)
+						.padStart(2, "0")
+				)
+				.join("")
+		);
+	}
+	function nextCaseColor() {
+		const used = new Set(project.cases.map((item) => item.color.toLowerCase()));
+		for (let i = project.cases.length; i < project.cases.length + 500; i++) {
+			const color = hslToHex((i * 137.508) % 360, 52, [34, 28, 40][i % 3]);
+			if (!used.has(color)) return color;
+		}
+		return "#733b3b";
+	}
+	function blankCard(type, name, role) {
+		return { id: uid(), type, title: name, role, image: "", fields: {} };
 	}
 	function newCase() {
-		const id = crypto.randomUUID();
 		const item = {
-			id, title: "Nouvelle affaire", summary: "", context: "", disagreement: "", image: "",
+			id: uid(),
+			title: "Nouvelle affaire",
+			summary: "",
+			color: nextCaseColor(),
 			cards: [
 				blankCard("affaire", "L’affaire", "Audience publique"),
-				blankCard("accuse", "La personne mise en cause", "Défense"),
-				blankCard("accusateur", "La personne plaignante", "Accusation"),
-				...[1, 2, 3, 4].map(number => blankCard("temoin", `Témoin ${number}`, "Témoin")),
-				blankCard("debrief", "Débrief pédagogique", "Débrief"),
-				blankCard("faits", "Faits et indices", "Repères de l’enquête")
+				blankCard("juge", "Le juge", "Maître du jeu"),
+				blankCard("accusateur", "L’accusateur", "Accusateur"),
+				blankCard("accuse", "L’accusé", "Accusé"),
+				...[1, 2, 3, 4].map((n) => blankCard("temoin", `Témoin ${n}`, "Témoin")),
+				blankCard("debrief", "Débrief", "Débrief")
 			]
 		};
-		project.cases.push(item); ui.caseId = id; ui.cardId = item.cards[0].id; persist(); setView("editor");
+		const model = project.cases[0] && project.cases[0].cards.find((card) => card.type === "juge");
+		if (model) {
+			const juge = item.cards[1];
+			juge.fields = { mission: model.fields.mission || "", steps: model.fields.steps || "" };
+		}
+		project.cases.push(item);
+		ui.caseId = item.id;
+		ui.cardId = item.cards[0].id;
+		ui.preview = "front";
+		persist();
+		setView("editor");
 	}
 	function duplicateCase(id) {
 		const original = getCase(id);
 		if (!original) return;
 		const copy = window.TDC_STORAGE.clone(original);
-		copy.id = crypto.randomUUID(); copy.title += " — copie";
-		copy.cards.forEach(card => { card.id = crypto.randomUUID(); });
-		project.cases.push(copy); ui.caseId = copy.id; ui.cardId = copy.cards[0] && copy.cards[0].id; const saved = persist(); setView("editor"); if (saved) notify("Le dossier a été dupliqué.");
+		copy.id = uid();
+		copy.title += " — copie";
+		copy.color = nextCaseColor();
+		copy.cards.forEach((card) => {
+			card.id = uid();
+		});
+		project.cases.push(copy);
+		ui.caseId = copy.id;
+		ui.cardId = copy.cards[0].id;
+		const saved = persist();
+		setView("editor");
+		if (saved) notify("Le dossier a été dupliqué.");
 	}
 	function deleteCase(id) {
 		const item = getCase(id);
-		if (!item || !confirm(`Supprimer « ${item.title} » et ses ${item.cards.length} carte(s) ?`)) return;
-		project.cases = project.cases.filter(entry => entry.id !== id);
-		ui.caseId = project.cases[0] && project.cases[0].id; ui.cardId = null; const saved = persist(); setView(project.cases.length ? "cases" : "dashboard"); if (saved) notify("Dossier supprimé.");
+		if (!item || !confirm(`Supprimer « ${item.title} » et ses ${item.cards.length} cartes ?`)) return;
+		project.cases = project.cases.filter((entry) => entry.id !== id);
+		ui.caseId = project.cases[0] && project.cases[0].id;
+		ui.cardId = null;
+		const saved = persist();
+		setView(project.cases.length ? "cases" : "dashboard");
+		if (saved) notify("Dossier supprimé.");
 	}
-	function download(filename, text, mime) {
-		const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([text], { type: mime })); link.download = filename; link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+
+	// ---------- Export / import du grimoire ----------
+	function download(filename, blob) {
+		const link = document.createElement("a");
+		link.href = URL.createObjectURL(blob);
+		link.download = filename;
+		link.click();
+		setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 	}
 	function exportProject() {
-		const safeName = (project.settings.gameName || "grimoire").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-		download(`${safeName || "grimoire"}.json`, JSON.stringify(project, null, 2), "application/json");
-		notify("Export JSON créé avec les images intégrées.");
+		const safeName =
+			(project.settings.gameName || "grimoire")
+				.toLowerCase()
+				.replace(/[^a-z0-9]+/g, "-")
+				.replace(/^-|-$/g, "") || "grimoire";
+		download(`${safeName}.json`, new Blob([JSON.stringify(project, null, 2)], { type: "application/json" }));
+		notify("Export créé. Les images restent dans uploads/illustrations/ : joignez ce dossier.");
 	}
-	function parseCsv(text) {
-		const rows = [];
-		let row = [], value = "", quoted = false;
-		for (let i = 0; i < text.length; i++) {
-			const char = text[i];
-			if (quoted) {
-				if (char === '"' && text[i + 1] === '"') { value += '"'; i++; }
-				else if (char === '"') quoted = false;
-				else value += char;
-			} else if (char === '"' && value.length === 0) quoted = true;
-			else if (char === ",") { row.push(value); value = ""; }
-			else if (char === "\n" || char === "\r") {
-				if (char === "\r" && text[i + 1] === "\n") i++;
-				row.push(value);
-				if (row.some(cell => cell !== "")) rows.push(row);
-				row = []; value = "";
-			} else value += char;
-		}
-		if (quoted) throw new Error("CSV invalide : guillemet non refermé.");
-		row.push(value);
-		if (row.some(cell => cell !== "")) rows.push(row);
-		if (!rows.length) throw new Error("Le CSV est vide.");
-		const headers = rows.shift().map((header, index) => header.replace(index === 0 ? /^\uFEFF/ : "", "").trim());
-		if (new Set(headers).size !== headers.length) throw new Error("Le CSV contient des noms de colonnes en double.");
-		return rows.map((cells, index) => {
-			if (cells.length !== headers.length) throw new Error(`Ligne ${index + 2} : ${cells.length} colonnes au lieu de ${headers.length}.`);
-			return Object.fromEntries(headers.map((header, column) => [header, cells[column]]));
-		});
-	}
-	function projectFromCsv(text) {
-		const rows = parseCsv(text);
-		const required = ["case_id", "case_title", "card_order", "card_type", "card_title", "role", "fields_json"];
-		const headers = new Set(Object.keys(rows[0] || {}));
-		const missing = required.filter(key => !headers.has(key));
-		if (missing.length) throw new Error(`Colonnes CSV obligatoires absentes : ${missing.join(", ")}.`);
-		const cases = new Map();
-		rows.forEach((row, index) => {
-			if (!row.case_id || !row.case_title) throw new Error(`Ligne ${index + 2} : case_id et case_title sont requis.`);
-			let item = cases.get(row.case_id);
-			if (!item) {
-				item = { id: row.case_id, title: row.case_title, summary: row.case_summary || "", context: row.case_context || "", disagreement: row.case_disagreement || "", image: row.case_image || "", cards: [] };
-				cases.set(row.case_id, item);
-			} else if (item.title !== row.case_title) throw new Error(`Ligne ${index + 2} : case_title doit rester identique pour un même case_id.`);
-			let fields;
-			try { fields = JSON.parse(row.fields_json || "{}"); } catch { throw new Error(`Ligne ${index + 2} : fields_json n’est pas un objet JSON valide.`); }
-			if (!fields || Array.isArray(fields) || typeof fields !== "object") throw new Error(`Ligne ${index + 2} : fields_json doit contenir un objet JSON.`);
-			const cardOrder = Number(row.card_order);
-			if (!/^[0-8]$/.test(row.card_order) || item.cards.some(card => card.order === cardOrder)) throw new Error(`Ligne ${index + 2} : card_order doit être unique et compris entre 0 et 8 pour chaque affaire.`);
-			item.cards.push({
-				id: row.card_id || crypto.randomUUID(),
-				type: row.card_type,
-				title: row.card_title,
-				role: row.role,
-				fields,
-				image: row.image_data_url || "",
-				imagePosition: row.image_position || "center",
-				order: cardOrder
-			});
-		});
-		const importedCases = [...cases.values()];
-		importedCases.forEach(item => item.cards.sort((a, b) => a.order - b.order).forEach(card => delete card.order));
-		return { version: 1, settings: window.TDC_STORAGE.clone(window.TDC_DATA.settings), cases: importedCases };
-	}
-	function validateProject(incoming) {
-		if (!incoming || incoming.version !== 1 || !Array.isArray(incoming.cases) || !incoming.settings || typeof incoming.settings !== "object" || Array.isArray(incoming.settings)) throw new Error("Structure du grimoire non reconnue.");
-		const caseIds = new Set(), cardIds = new Set();
-		const valid = incoming.cases.every(item => {
-			if (!item || typeof item.id !== "string" || !item.id || caseIds.has(item.id) || typeof item.title !== "string" || !Array.isArray(item.cards) || item.cards.length !== 9 || !isAllowedImage(item.image)) return false;
-			if (CORE_CARD_TYPES.some(type => item.cards.filter(card => card && card.type === type).length !== 1) || item.cards.filter(card => card && card.type === "temoin").length !== 4) return false;
-			caseIds.add(item.id);
-			return item.cards.every(card => {
-				if (!card || typeof card.id !== "string" || !card.id || cardIds.has(card.id) || !TYPES[card.type] || typeof card.title !== "string" || typeof card.role !== "string" || !card.fields || Array.isArray(card.fields) || typeof card.fields !== "object" || !Object.values(card.fields).every(value => typeof value === "string")) return false;
-				if (!isAllowedImage(card.image)) return false;
-				cardIds.add(card.id);
-				return true;
-			});
-		});
-		if (!valid) throw new Error("Chaque affaire doit contenir exactement 9 cartes : une affaire, un accusé, un accusateur, quatre témoins, un débrief et une carte faits. Vérifiez aussi les identifiants, les champs et les images.");
-	}
-	function assignImportedIllustrations(incoming) {
-		incoming.cases.forEach(item => {
-			item.cards.sort((a, b) => CARD_ORDER.indexOf(a.type) - CARD_ORDER.indexOf(b.type));
-			const affairCard = item.cards.find(card => card.type === "affaire");
-			item.cards.forEach(card => { if (card.type !== "affaire") card.image = ""; });
-			if (!item.image && !(affairCard && affairCard.image) && BUILTIN_ILLUSTRATIONS.length) item.image = BUILTIN_ILLUSTRATIONS[Math.floor(Math.random() * BUILTIN_ILLUSTRATIONS.length)].src;
-		});
+	function importProject(text) {
+		const incoming = JSON.parse(text);
+		validateProject(incoming);
+		if (
+			!confirm(
+				"Remplacer le projet actuel par le grimoire importé ? Exportez d’abord votre projet si vous souhaitez le conserver."
+			)
+		)
+			return;
+		window.TDC_STORAGE.save(incoming, true);
+		Object.assign(project, incoming);
+		ui.caseId = project.cases[0] && project.cases[0].id;
+		ui.cardId = null;
+		setView("dashboard");
+		notify("Grimoire importé avec succès.");
 	}
 	function resetProject() {
-		if (!confirm("Réinitialiser le projet local et recharger les trois affaires d’exemple ? Pensez à exporter vos travaux avant cette action.")) return;
-		try { localStorage.removeItem("tribunal-du-chaos-atelier-v1"); } catch (error) { notify("Impossible d’effacer les données locales : " + error.message, true); return; }
+		if (
+			!confirm(
+				"Réinitialiser le projet local et recharger les trois affaires d’exemple ? Pensez à exporter vos travaux avant."
+			)
+		)
+			return;
+		try {
+			localStorage.removeItem(window.TDC_STORAGE.KEY);
+		} catch (error) {
+			notify("Impossible d’effacer les données locales : " + error.message, true);
+			return;
+		}
 		window.location.reload();
 	}
-	function updateField(target) {
-		const separator = target.name.indexOf(".");
-		const scope = target.name.slice(0, separator), key = target.name.slice(separator + 1);
-		if (scope === "case") {
-			const item = getCase(ui.caseId); if (item) item[key] = target.value;
-		} else if (scope === "card") {
-			const card = getCard(ui.cardId); if (card && key !== "caseId") card[key] = target.value;
-		} else if (scope === "field") {
-			const card = getCard(ui.cardId); if (card) card.fields[key] = target.value;
-		} else if (scope === "settings") project.settings[key] = target.value;
-		else if (scope === "familyColor") {
-			project.settings.familyColors = project.settings.familyColors || {};
-			project.settings.familyColors[key] = safeColor(target.value, "#846838");
+
+	// ---------- Import d’illustrations ----------
+	function loadBitmap(file) {
+		return new Promise((resolve, reject) => {
+			const url = URL.createObjectURL(file),
+				img = new Image();
+			img.onload = () => {
+				URL.revokeObjectURL(url);
+				resolve(img);
+			};
+			img.onerror = () => {
+				URL.revokeObjectURL(url);
+				reject(new Error("Image illisible."));
+			};
+			img.src = url;
+		});
+	}
+	// Recadre au centre au ratio 7:3 et exporte en JPEG 1400 × 600 : l’image remplit exactement le cadre.
+	async function normalizeImage(file) {
+		const img = await loadBitmap(file);
+		const sw = img.naturalWidth || IMAGE_SIZE.width,
+			sh = img.naturalHeight || IMAGE_SIZE.height;
+		const scale = Math.max(IMAGE_SIZE.width / sw, IMAGE_SIZE.height / sh);
+		const canvas = document.createElement("canvas");
+		canvas.width = IMAGE_SIZE.width;
+		canvas.height = IMAGE_SIZE.height;
+		const ctx = canvas.getContext("2d");
+		ctx.fillStyle = "#fff";
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		ctx.drawImage(
+			img,
+			(canvas.width - sw * scale) / 2,
+			(canvas.height - sh * scale) / 2,
+			sw * scale,
+			sh * scale
+		);
+		const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.88));
+		if (!blob) throw new Error("Conversion impossible.");
+		return blob;
+	}
+	const toDataUrl = (blob) =>
+		new Promise((resolve, reject) => {
+			const r = new FileReader();
+			r.onload = () => resolve(r.result);
+			r.onerror = reject;
+			r.readAsDataURL(blob);
+		});
+	async function importIllustration(file, card) {
+		if (!file.type.startsWith("image/")) throw new Error("Choisissez un fichier image.");
+		if (file.size > 15 * 1024 * 1024) throw new Error("Image trop volumineuse (15 Mo maximum).");
+		const blob = await normalizeImage(file);
+		const base =
+			file.name
+				.replace(/\.[^.]+$/, "")
+				.toLowerCase()
+				.normalize("NFD")
+				.replace(/[\u0300-\u036f]/g, "")
+				.replace(/[^a-z0-9]+/g, "-")
+				.replace(/^-|-$/g, "")
+				.slice(0, 40) || "image";
+		const name = `${base}-${Date.now().toString(36)}.jpg`;
+		let path = `${UPLOAD_DIR}/${name}`,
+			how = "download";
+		try {
+			// serveur local (node server.js) : enregistrement automatique dans uploads/illustrations
+			const response = await fetch(`api/upload?name=${encodeURIComponent(name)}`, {
+				method: "POST",
+				headers: { "Content-Type": "image/jpeg" },
+				body: blob
+			});
+			if (response.ok) {
+				path = (await response.json()).path;
+				how = "server";
+			}
+		} catch (error) {
+			/* pas de serveur d'upload : on passe aux solutions de repli */
 		}
+		if (how === "download") download(name, blob); // 2. repli : téléchargement manuel
+		images[path] = await toDataUrl(blob);
+		window.TDC_STORAGE.saveImages(images);
+		project.uploads.push(path);
+		card.image = path;
 		persist();
-		if (scope === "settings") applyTheme();
-		if (scope === "field" || (scope === "card" && ["title", "role", "imagePosition"].includes(key))) {
-			const panel = document.querySelector(".preview-panel");
-			if (panel) panel.innerHTML = `<div><h3>Aperçu du sceau</h3>${cardPreview(getCard(ui.cardId))}<div class="preview-switch"><button class="button button-small ${ui.preview === "front" ? "button-gold" : ""}" data-action="preview-side" data-side="front">Recto</button><button class="button button-small ${ui.preview === "back" ? "button-gold" : ""}" data-action="preview-side" data-side="back">Verso</button></div></div>`;
-		}
-		if (scope === "field" || (scope === "card" && ["title", "role"].includes(key))) {
-			const card = getCard(ui.cardId), status = document.getElementById("card-length-status");
-			if (card && status) status.outerHTML = lengthStatus(card);
-			refreshLengthWarnings();
-		}
+		render();
+		notify(
+			how === "download"
+				? `Image téléchargée seulement : placez « ${name} » dans atelier-cartes/${UPLOAD_DIR}/ (ou lancez node server.js pour l’enregistrement automatique).`
+				: `Image enregistrée dans atelier-cartes/${UPLOAD_DIR}/.`
+		);
+	}
+	// ---------- Saisie ----------
+	function updateField(target) {
+		const dot = target.name.indexOf(".");
+		const scope = target.name.slice(0, dot),
+			key = target.name.slice(dot + 1);
+		const card = getCard(ui.cardId),
+			item = getCase(ui.caseId);
+		if (scope === "case" && item)
+			item[key] = key === "color" ? safeColor(target.value, "#733b3b") : target.value;
+		else if (scope === "card" && card) {
+			if (key === "image") card.image = IMAGE_PATH.test(target.value) ? target.value : "";
+			else card[key] = target.value;
+		} else if (scope === "field" && card) card.fields[key] = target.value;
+		else if (scope === "settings") project.settings[key] = target.value;
+		persist();
 		if (scope === "settings") {
-			const back = document.querySelector(".back-sample");
-			if (back) back.innerHTML = `<span class="emblem">${esc(project.settings.emblem)}</span><h3>${esc(project.settings.gameName)}</h3><p>${esc(project.settings.subtitle)}</p>${project.settings.backNote ? `<p>${esc(project.settings.backNote)}</p>` : ""}`;
-			applyEmblem();
+			applyTheme();
+			return;
 		}
+		const panel = document.querySelector(".preview-panel");
+		if (panel && card) panel.innerHTML = previewPanelHtml(card, item);
+		const status = document.getElementById("card-length-status");
+		if (status && card) status.outerHTML = lengthStatus(card);
+		const list = document.querySelector(".card-list");
+		if (list && item) list.innerHTML = cardListHtml(item, card);
 	}
 	function handleAction(button) {
 		const { action, id } = button.dataset;
-		if (action === "new-case") newCase();
-		if (action === "open-case") { ui.caseId = id; ui.cardId = null; setView("editor"); }
-		if (action === "duplicate-case") duplicateCase(id);
-		if (action === "delete-case") deleteCase(id);
-		if (action === "select-card") { const item = getCase(ui.caseId); if (item && item.cards.some(card => card.id === id)) { ui.cardId = id; ui.preview = "front"; render(); } }
-		if (action === "preview-side") { ui.preview = button.dataset.side; render(); }
-		if (action === "edit-library-card") { const item = project.cases.find(entry => entry.cards.some(card => card.id === id)); ui.caseId = item.id; ui.cardId = id; setView("editor"); }
-		if (action === "export") exportProject();
-		if (action === "reset") resetProject();
-		if (action === "do-print") window.print();
-		if (action === "clear-print-selection") { ui.print.selected = []; render(); }
-		if (action === "print-one") { ui.print.selected = [id]; ui.print.caseId = "all"; ui.print.type = ""; setView("printing"); }
-		if (action === "remove-card-image") { const card = getCard(id); if (card) { card.image = ""; persist(); render(); } }
-		if (action === "remove-case-image") { const item = getCase(id); if (item) { item.image = ""; persist(); render(); } }
+		const actions = {
+			"new-case": newCase,
+			"open-case": () => {
+				ui.caseId = id;
+				ui.cardId = null;
+				setView("editor");
+			},
+			"duplicate-case": () => duplicateCase(id),
+			"delete-case": () => deleteCase(id),
+			"select-card": () => {
+				const item = getCase(ui.caseId);
+				if (item && item.cards.some((card) => card.id === id)) {
+					ui.cardId = id;
+					ui.preview = "front";
+					render();
+				}
+			},
+			"preview-side": () => {
+				ui.preview = button.dataset.side;
+				render();
+			},
+			"edit-library-card": () => {
+				const item = project.cases.find((entry) => entry.cards.some((card) => card.id === id));
+				ui.caseId = item.id;
+				ui.cardId = id;
+				setView("editor");
+			},
+			export: exportProject,
+			reset: resetProject,
+			"do-print": () => window.print(),
+			"clear-print-selection": () => {
+				ui.print.selected = [];
+				render();
+			},
+			"print-one": () => {
+				ui.print.selected = [id];
+				ui.print.caseId = "all";
+				ui.print.type = "";
+				setView("printing");
+			}
+		};
+		if (actions[action]) actions[action]();
 	}
-	document.addEventListener("click", event => {
+
+	document.addEventListener("click", (event) => {
 		const viewButton = event.target.closest("[data-view]");
-		if (viewButton) { event.preventDefault(); setView(viewButton.dataset.view); return; }
+		if (viewButton) {
+			event.preventDefault();
+			setView(viewButton.dataset.view);
+			return;
+		}
 		const actionButton = event.target.closest("[data-action]");
-		if (actionButton) { event.preventDefault(); handleAction(actionButton); }
-	});
-	document.addEventListener("input", event => {
-		const target = event.target;
-		if (target.name && (target.name.startsWith("case.") || target.name.startsWith("card.") || target.name.startsWith("field.") || target.name.startsWith("settings.") || target.name.startsWith("familyColor."))) updateField(target);
-		if (target.id === "lib-search") { ui.library.search = target.value; render(); const input = document.getElementById("lib-search"); input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
-	});
-	document.addEventListener("change", event => {
-		const target = event.target;
-		if (target.id === "lib-type") { ui.library.type = target.value; render(); }
-		else if (target.id === "lib-case") { ui.library.caseId = target.value; render(); }
-		else if (target.id === "lib-role") { ui.library.role = target.value; render(); }
-		else if (target.id === "lib-concept") { ui.library.concept = target.value; render(); }
-		else if (target.id === "lib-illustrated") { ui.library.illustrated = target.checked; render(); }
-		else if (target.id === "print-case") { ui.print.caseId = target.value; render(); }
-		else if (target.id === "print-type") { ui.print.type = target.value; render(); }
-		else if (target.id === "print-copies") { ui.print.copies = Math.max(1, Math.min(30, Number(target.value) || 1)); render(); }
-		else if (target.id === "print-duplex") { ui.print.duplex = target.checked; render(); }
-		else if (target.id === "print-flip") { ui.print.flip = target.checked; render(); }
-		else if (target.dataset.printCard) { const id = target.dataset.printCard; ui.print.selected = target.checked ? [...new Set([...ui.print.selected, id])] : ui.print.selected.filter(entry => entry !== id); render(); }
-		else if (target.dataset.imageCard || target.dataset.imageCase) {
-			const file = target.files && target.files[0]; if (!file) return;
-			if (!file.type.startsWith("image/")) { notify("Choisissez un fichier image.", true); return; }
-			if (file.size > 3 * 1024 * 1024) { notify("Image trop volumineuse (maximum 3 Mo par image).", true); return; }
-			const reader = new FileReader(); reader.onerror = () => notify("Impossible de lire cette image.", true);
-			reader.onload = () => { if (target.dataset.imageCard) { const card = getCard(target.dataset.imageCard); if (card) card.image = reader.result; } else { const item = getCase(target.dataset.imageCase); if (item) item.image = reader.result; } const saved = persist(); render(); if (saved) notify("Illustration ajoutée au dossier."); }; reader.readAsDataURL(file);
-		} else if (target.id === "import-file") {
-			const file = target.files && target.files[0]; if (!file) return;
-			const reader = new FileReader(); reader.onerror = () => notify("Impossible de lire le fichier.", true);
-			reader.onload = () => {
-				try {
-					const isCsv = file.name.toLowerCase().endsWith(".csv");
-					const incoming = isCsv ? projectFromCsv(reader.result) : JSON.parse(reader.result);
-					validateProject(incoming);
-					if (!confirm("Remplacer le projet actuel par le grimoire importé ? Exportez d’abord votre projet si vous souhaitez le conserver.")) return;
-					assignImportedIllustrations(incoming);
-					incoming.settings.familyColors = incoming.settings.familyColors || {};
-					window.TDC_STORAGE.save(incoming, true);
-					project.version = incoming.version; project.settings = incoming.settings; project.cases = incoming.cases;
-					ui.caseId = project.cases[0] && project.cases[0].id; ui.cardId = null; setView("dashboard");
-					notify(`Grimoire ${isCsv ? "CSV" : "JSON"} importé avec succès.`);
-				} catch (error) { notify("Import impossible : " + error.message, true); } finally { target.value = ""; }
-			}; reader.readAsText(file);
+		if (actionButton) {
+			event.preventDefault();
+			handleAction(actionButton);
 		}
 	});
+	document.addEventListener("input", (event) => {
+		const target = event.target;
+		if (/^(case|card|field|settings)\./.test(target.name || "") && target.tagName !== "SELECT")
+			updateField(target);
+		if (target.id === "lib-search") {
+			ui.library.search = target.value;
+			render();
+			const input = document.getElementById("lib-search");
+			input.focus();
+			input.setSelectionRange(input.value.length, input.value.length);
+		}
+	});
+	document.addEventListener("change", (event) => {
+		const target = event.target,
+			o = ui.print;
+		if (/^(case|card|field|settings)\./.test(target.name || "") && target.tagName === "SELECT") {
+			updateField(target);
+			if (target.name === "card.image") render();
+			return;
+		}
+		const handlers = {
+			"lib-type": () => {
+				ui.library.type = target.value;
+			},
+			"lib-case": () => {
+				ui.library.caseId = target.value;
+			},
+			"print-case": () => {
+				o.caseId = target.value;
+			},
+			"print-type": () => {
+				o.type = target.value;
+			},
+			"print-copies": () => {
+				o.copies = Math.max(1, Math.min(30, Number(target.value) || 1));
+			},
+			"print-sides": () => {
+				o.sides = target.checked;
+			},
+			"print-duplex": () => {
+				o.duplex = target.checked;
+			},
+			"print-flip": () => {
+				o.flip = target.checked;
+			}
+		};
+		if (handlers[target.id]) {
+			handlers[target.id]();
+			render();
+		} else if (target.dataset.printCard) {
+			const id = target.dataset.printCard;
+			o.selected = target.checked
+				? [...new Set([...o.selected, id])]
+				: o.selected.filter((entry) => entry !== id);
+			render();
+		} else if (target.dataset.imageCard) {
+			const file = target.files && target.files[0],
+				card = getCard(target.dataset.imageCard);
+			if (file && card)
+				importIllustration(file, card).catch((error) => notify("Import impossible : " + error.message, true));
+			target.value = "";
+		} else if (target.id === "import-file") {
+			const file = target.files && target.files[0];
+			if (!file) return;
+			const reader = new FileReader();
+			reader.onerror = () => notify("Impossible de lire le fichier.", true);
+			reader.onload = () => {
+				try {
+					importProject(reader.result);
+				} catch (error) {
+					notify("Import impossible : " + error.message, true);
+				} finally {
+					target.value = "";
+				}
+			};
+			reader.readAsText(file);
+		}
+	});
+	// Si le fichier d’une image importée n’est pas (encore) dans uploads/, on utilise la copie locale.
+	document.addEventListener(
+		"error",
+		(event) => {
+			const img = event.target;
+			if (
+				img.tagName === "IMG" &&
+				img.dataset.path &&
+				images[img.dataset.path] &&
+				img.src !== images[img.dataset.path]
+			)
+				img.src = images[img.dataset.path];
+		},
+		true
+	);
+
 	setView("dashboard");
-	if (window.TDC_STORAGE_LOAD_ERROR) notify("Le projet local est illisible ou incompatible avec le format à 9 cartes. Importez un projet compatible ou réinitialisez le grimoire.", true);
+	if (window.TDC_STORAGE_LOAD_ERROR)
+		notify(
+			"Le projet local est illisible ou d’un ancien format : importez un grimoire v2 ou réinitialisez.",
+			true
+		);
 })();

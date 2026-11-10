@@ -1,170 +1,153 @@
 # L’Atelier du Greffier
 
-Générateur hors ligne de cartes pour **Le Tribunal du Chaos**. Ouvrir [`atelier-cartes/index.html`](./atelier-cartes/index.html) dans un navigateur récent ; aucun serveur ni installation n’est requis.
+Générateur de cartes pour **Le Tribunal du Chaos**, un jeu de communication où des joueurs défendent chacun une version d’un même conflit.
 
-## Règle du paquet
+C’est un **site statique** (HTML/CSS/JS, sans serveur ni base de données). Les dossiers sont sauvegardés dans le navigateur (`localStorage`) ; les illustrations vivent dans le dossier du projet.
 
-Chaque affaire utilise une feuille A4 dédiée de **3 × 3 emplacements**, soit neuf cartes de **70 × 99 mm** :
+## Lancer le site (important)
 
-1. `affaire` — contexte public
-2. `accuse` — version de la défense
-3. `accusateur` — version de l’accusation
-4. 4-7 `temoin` — quatre témoignages distincts
-8. `debrief` — analyse et pistes de désamorçage
-9. `faits` — faits établis, éléments incertains et questions
+```bash
+node server.js        # puis ouvrir http://localhost:8000
+```
 
-Ces neuf cartes sont créées pour chaque nouvelle affaire : il reste à les remplir. Les types et le rattachement au dossier sont fixes. Dupliquer une affaire pour créer une variante complète. Les cartes vierges d’une nouvelle affaire ne constituent pas encore une affaire rédigée.
+- **Le serveur est nécessaire pour enregistrer les images importées** dans `atelier-cartes/uploads/illustrations/` (tous navigateurs, Firefox compris). Une page statique ne peut pas écrire sur le disque ; `server.js` (Node ≥ 14, sans dépendance) le fait. Il n’écoute que sur votre machine.
+- Sans serveur (double-clic sur [`atelier-cartes/index.html`](./atelier-cartes/index.html)) : tout marche (édition, aperçu, impression), sauf que l’import d’image se contente de **télécharger** le fichier, à ranger à la main dans `uploads/illustrations/`.
 
-**Impression :** une affaire = une feuille de rectos ; avec les versos, son verso est imprimé sur la feuille suivante. Pour plusieurs affaires, les feuilles sont produites dans l’ordre affaire 1 recto, affaire 1 verso, affaire 2 recto, affaire 2 verso, etc. Les filtres de type et la sélection individuelle laissent les autres emplacements vierges, sans mélanger les affaires. Le nombre d’exemplaires répète le paquet entier. Les traits pointillés autour de chaque emplacement servent de lignes de coupe.
+## Le jeu
 
-Dans la boîte de dialogue d’impression, sélectionner A4 portrait, échelle 100 % et impression des arrière-plans. La mise en page CSS occupe toute la page A4 ; pour une imprimante papier, seule une imprimante avec impression sans bordure peut réellement imprimer jusqu’aux bords. Sinon, le pilote peut réduire ou rogner la page selon sa zone non imprimable. Pour conserver exactement les dimensions de 70 × 99 mm, exporter d’abord en PDF puis imprimer à taille réelle, sans « ajuster à la page ». Vérifier l’option de retournement recto-verso et imprimer une feuille de test avant un grand tirage.
+### Rôles et matériel d’une affaire (9 cartes)
 
-## Dimensions des cartes et éléments visuels
+| Carte | Nb | Contenu | Logo du dos |
+|---|---|---|---|
+| Affaire | 1 | Contexte public, reproche de l’accusateur, réponse de l’accusé (+ illustration) | Marteau de juge |
+| Juge | 1 | Mission et déroulé de la partie, sans question ni indice : le juge doit trouver la vérité lui-même (remplace l’ancienne carte « faits et indices ») | Tribunal (colonnes) |
+| Accusateur | 1 | Objectif + **faits** connus | Casque de chevalier |
+| Accusé | 1 | Objectif + **faits** connus | Épée |
+| Témoin | 4 | **Faits** connus uniquement | Œil |
+| Débrief | 1 | Version réelle de l’histoire + mécanismes qui ont mené à cette issue | Balance |
 
-Les dimensions ci-dessous sont celles du rendu imprimé à **100 %**, hors réduction éventuelle par une imprimante sans impression bord à bord. Elles servent de gabarit pour créer des illustrations ou modifier la mise en page.
+En plus, **4 cartes de côté** (2 « côté de l’accusateur » + 2 « côté de l’accusé »), imprimées sur une feuille à part à la fin du PDF. Elles ont toutes **le même dos** (neutre, logo œil) ; leur recto porte le logo du chevalier ou de l’épée.
 
-| Élément | Dimensions imprimées | Détails |
-|---|---:|---|
-| Feuille | 210 × 297 mm | A4 portrait, sans marge CSS |
-| Grille | 3 × 3 cartes | Chaque emplacement mesure 70 × 99 mm |
-| Carte / ligne de coupe | 70 × 99 mm | Bordure de coupe pointillée de 0,2 mm |
-| Cadre intérieur | 65,2 × 94,2 mm | Inset de 2,4 mm de chaque côté de la carte |
-| Zone de contenu intérieure | 58,3 mm de large | Le cadre intérieur a 3 mm de retrait horizontal supplémentaire de chaque côté, hors bordure |
-| Cadre d’illustration | 58,3 × 26 mm | Pleine largeur de la zone de contenu, hauteur fixe, dans le cadre intérieur |
-| Image visible dans son cadre | Environ 55,1 × 22,8 mm | L’encadrement médiéval prend le reste ; `object-fit: cover` recadre sans déformer |
-| Emblème du verso | 38 × 38 mm | Balance ou autre emblème choisi dans les réglages |
+**Dos :** une couleur de dos **par affaire**, attribuée automatiquement et toujours différente (teintes espacées de l’angle d’or : 50 affaires = 50 couleurs distinctes, sans cycle ; modifiable dans le dossier) et un logo différent par famille de carte. Les logos sont des SVG originaux dans [`atelier-cartes/js/icons.js`](./atelier-cartes/js/icons.js).
 
-Le cadre intérieur a un retrait imprimé de **3,5 mm en haut**, **3 mm sur les côtés** et **2,5 mm en bas**. Les textes sont composés dans la zone restante, après le titre, le type et, sur la carte `affaire`, l’illustration. Les tailles typographiques imprimées sont : type **7 pt**, titre **11 pt**, corps **9 pt**, rôle **7 pt**, ornement de recto **11 pt**. Le texte peut être masqué s’il dépasse l’espace de la carte ; respecter aussi les limites de caractères indiquées plus bas.
+### Déroulement d’une partie
 
-### Préparer une illustration
+1. Chacun pioche une carte (affaire, rôles) et la regarde en secret.
+2. Les témoins piochent en plus une **carte de côté** : ils soutiennent l’accusateur ou l’accusé.
+3. Le **juge** est le maître du jeu : il lit l’affaire et donne la parole.
+4. **Premier tour** : chacun parle **30 secondes** (sablier), accusateur, accusé, puis témoins. **Second tour** : chacun reparle 30 secondes.
+5. On s’exprime **sans jamais mentir sur les faits** écrits sur sa carte, mais on peut taire des informations. Les cartes ne contiennent **que des faits** ; les **opinions et sentiments** sont libres : on peut les « arranger » pour faire gagner son camp.
+6. Le juge n’a pas de questions préparées : c’est à lui de trouver la vérité. Il donne son avis sur l’affaire.
+7. Tous lisent ensemble la carte **Débrief**.
 
-L’image n’est imprimée que sur le recto de la carte `affaire`. Pour limiter le recadrage, générer une illustration **paysage au ratio d’environ 2,42:1** ; une image d’environ **651 × 269 px à 300 ppp** convient au cadre imprimé de 55,1 × 22,8 mm. Le ratio n’est pas obligatoire : les images plus hautes ou plus larges sont recadrées au centre, sans étirement. La position du recadrage peut être réglée dans l’éditeur (centre, haut, bas, gauche, droite). Ne pas intégrer le titre ni le texte de la carte dans l’image : le texte est composé séparément sous l’illustration.
+### Points à garder en tête
 
-Les tailles de carte, de cadre et de texte imprimé sont fixes dans le gabarit ; les réglages de l’application permettent de changer certains aspects graphiques (cadre simple ou double, typographie, ornement, couleurs par famille et position de l’image), mais pas ces dimensions. Pour modifier le gabarit, consulter les règles correspondantes dans `atelier-cartes/css/print.css` (`.print-card`, `.print-card-inner`, `.print-illustration-frame`, `.print-card-content`) et son aperçu écran dans `atelier-cartes/css/atelier.css`.
+- 4 témoins, 4 cartes de côté (2 accusateur + 2 accusé) : chaque témoin en pioche une, ce qui garantit 2 contre 2.
+- Les témoins ont des faits neutres : le même fait peut servir l’un ou l’autre côté selon l’interprétation.
+- Faits uniquement sur les cartes : pas de rubrique « avis » ou « sentiment », ce qui évite que la carte ne dicte la version à raconter.
 
-## Limites de texte
+## Que mettre sur chaque carte (guide de rédaction, notamment pour une IA)
 
-L’éditeur signale les dépassements sans couper ni effacer le texte :
+Format de sortie : **JSON v2 uniquement** (voir plus bas ; le CSV n’existe plus). Une affaire = exactement 9 cartes. Écrire en français, phrases courtes, un fait par ligne (séparer par `\n` dans le JSON).
 
-- Titre : **48 caractères** conseillés.
-- Rôle/catégorie : **32 caractères** conseillés.
-- Ensemble des champs de texte de la carte : **650 caractères** sans illustration, **450 caractères** avec illustration.
+**Règle d’or : les cartes ne contiennent que des FAITS** (observable, vérifiable : ce qu’on a vu, entendu, fait, possédé, l’heure, le lieu). Jamais d’opinion, de sentiment, de jugement ni d’intention supposée (« il voulait nuire », « elle était jalouse »). Les joueurs inventent eux-mêmes opinions et sentiments, et peuvent les arranger pour faire gagner leur camp ; ils ne peuvent pas mentir sur les faits.
 
-Le total du texte correspond aux valeurs non vides de `fields`, assemblées avec deux sauts de ligne. Ces limites sont des seuils de lisibilité pour une carte de 70 × 99 mm, pas une troncature automatique. Un avertissement dans l’éditeur et l’aperçu indique les éléments à raccourcir avant l’impression. Les limites s’appliquent aux chaînes comme comptées par JavaScript.
-
-## Sauvegarde, images et import
-
-- Les modifications sont sauvegardées dans le stockage local du navigateur.
-- Seuls les projets respectant le gabarit de neuf cartes sont acceptés, y compris pour le chargement local. Un projet local incompatible reste protégé contre l’écrasement ; importer un projet compatible ou réinitialiser le grimoire pour le remplacer.
-- **Exporter le grimoire JSON** télécharge un fichier portable, y compris les illustrations personnalisées intégrées en data URI.
-- **Importer un grimoire** accepte les fichiers JSON ou CSV décrits ci-dessous et remplace le projet courant après confirmation.
-- Les fichiers image personnalisés sont intégrés comme data URI `data:image/...;base64,...` dans le JSON/CSV. Taille maximale par image importée dans l’interface : 3 Mo.
-- L’illustration apparaît uniquement sur le recto de la carte `affaire`, jamais sur les cartes de rôle ni sur les versos. Elle peut être fournie par `case.image` ou par `image` sur la carte `affaire`. Les réglages de position s’appliquent à cette illustration.
-- L’atelier inclut quatre illustrations fantasy CC0 dans `atelier-cartes/assets/illustrations/`. À l’import JSON ou CSV, une illustration fournie est conservée ; si l’affaire n’en a pas, une image intégrée est choisie au hasard pour sa carte `affaire`. Les images indiquées sur d’autres cartes ne sont pas utilisées. Garder le dossier `assets` avec l’application pour afficher et imprimer ces images.
-
-### Illustrations intégrées
-
-Ces œuvres fantasy sont publiées sous **CC0 1.0** sur Openclipart ; elles sont fournies localement pour garder l’atelier hors ligne :
-
-- [Fantasy dragon](https://openclipart.org/detail/319543) — `dragon.svg`
-- [Wizard](https://openclipart.org/detail/344786/wizard) — `sorcier.svg`
-- [Jousting Knight](https://openclipart.org/detail/351169/jousting-knight) — `chevalier.svg`
-- [RPG map symbols: Gate](https://openclipart.org/detail/11461/rpg-map-symbols-gate) — `porte-fantasy.svg`
-
-## Format JSON recommandé pour une IA
-
-Le JSON est le format recommandé : il représente proprement les tableaux, les textes multilignes et les images, et peut être importé directement. Produire un objet racine `version`, `settings`, `cases`. Les identifiants doivent être uniques. Une affaire contient ses cartes directement dans `cards` ; il n’y a pas de `caseId` dans chaque carte.
-
-Les types acceptés sont `affaire`, `accuse`, `accusateur`, `temoin`, `debrief`, `faits`. Chaque carte doit avoir `id`, `type`, `title`, `role`, `fields` (objet de chaînes, en privilégiant les clés ci-dessous). Les autres champs textuels importés restent modifiables. `image` et `imagePosition` sont facultatifs et ne s’appliquent qu’à la carte `affaire`. L’image peut être une data URI ; si l’affaire n’a pas d’image, l’application en choisit une au hasard parmi les illustrations fantasy intégrées. Chaque affaire doit contenir exactement une carte de chaque type sauf `temoin`, qui doit apparaître quatre fois.
-
-Champs recommandés par type :
-
-| Type | Clés `fields` |
+| Carte | Contenu attendu |
 |---|---|
-| `affaire` | `content`, `facts`, `interpretations` |
-| `accusateur` | `objective`, `available`, `evidence`, `interpretation`, `unknown` |
-| `accuse` | `objective`, `content`, `available`, `evidence`, `unknown` |
-| `faits` | `established`, `uncertain`, `questions` |
-| `temoin` | `content`, `facts`, `indirect`, `interpretation`, `reliability` |
-| `debrief` | `origin`, `aggravating`, `bias`, `needs`, `deescalation`, `question` |
+| `affaire` | `content` : ce qui s’est passé, neutre, 1-2 phrases. `accusation` : ce que l’accusateur reproche. `defense` : ce que l’accusé répond. Reste public et sans parti pris. |
+| `juge` | `mission` et `steps` uniquement, identiques d’une affaire à l’autre (rôle de maître du jeu ; déroulé avec 2 tours de 30 s). **Pas de questions ni d’indices** : le juge cherche seul. |
+| `accusateur` | `objective` : ce qu’il veut obtenir. `facts` : 3 faits qu’il connaît (dont au moins un qui l’arrange et un qui le dessert). |
+| `accuse` | Idem `accusateur`, du point de vue de l’accusé. |
+| `temoin` ×4 | `facts` : 2-3 faits vus ou entendus, **neutres** : chacun doit pouvoir servir l’accusateur *ou* l’accusé selon l’interprétation. Préciser ce que le témoin n’a pas vu. Les 4 témoins ont des faits différents et complémentaires. |
+| `debrief` | Explications **courtes et claires**, lues à voix haute à la fin. `story` : ce qui s’est réellement passé, en 2-3 phrases. `mechanisms` : les mécanismes du conflit qui ont mené à cette issue, nommés (biais de confirmation, erreur d’attribution, communication absente, demande ignorée, escalade…) avec un exemple tiré de l’affaire. `ending` : l’issue et comment désamorcer en 1 phrase. |
 
-`settings` contient notamment `gameName`, `subtitle`, `emblem`, `backNote`, `accent`, `fontStyle`, `frameStyle`, `ornament` et `familyColors`. Les couleurs sont des codes hexadécimaux. Pour une image personnalisée, fournir une data URI et non un chemin local.
+Cohérence de l’affaire : les faits des 6 cartes (accusateur, accusé, 4 témoins) doivent former ensemble une histoire unique, sans contradiction ; chaque fait clé n’est détenu que par une ou deux personnes, pour obliger à s’écouter. La vérité complète n’apparaît que dans le débrief.
 
-Exemple compact, valide et directement importable (les textes peuvent être remplacés, sans dépasser les seuils de longueur ci-dessus) :
+Limites : titre 48 caractères, rôle 32, texte 650 (280 pour l’affaire avec illustration, police réduite à 8 pt).
+
+## Impression
+
+Une affaire = une feuille A4 de 3 × 3 cartes de **70 × 99 mm**, suivie de sa feuille de versos ; à la fin, la feuille des cartes de côté. Dans la fenêtre d’impression : A4 portrait, échelle 100 %, **imprimer les arrière-plans**. Les filtres (affaire, famille, sélection) laissent les autres emplacements vides.
+
+## Illustrations : dimensions et import
+
+Seule la carte **Affaire** a une illustration (les autres faces manquent de place ; les logos ne sont que sur les dos).
+
+- **Dimension parfaite : 1400 × 600 px (ratio 7:3), JPEG ou PNG.** Le cadre de la carte a ce ratio ; l’image y est affichée en `object-fit: cover`.
+- Gardez le sujet au centre : tout import est recadré au centre au ratio 7:3.
+- Formats acceptés : PNG, JPEG, WebP, GIF, SVG ; 15 Mo maximum avant conversion.
+
+### Importer une image
+
+1. `node server.js`, ouvrir http://localhost:8000.
+2. Éditeur → carte Affaire → **Importer une image**.
+
+L’image est recadrée au centre en 1400 × 600 JPEG et **enregistrée dans `atelier-cartes/uploads/illustrations/`** ; la carte référence `uploads/illustrations/nom.jpg`. Ce dossier se versionne et se transmet avec le projet. Sans serveur : le fichier est seulement téléchargé (voir plus haut).
+
+### Pour une IA qui génère ou ajoute des images elle-même
+
+Une IA n’a pas besoin de l’interface :
+
+1. Créer l’image en **1400 × 600 px** (ratio 7:3, sujet centré, pas de texte près des bords), au format `.jpg`, `.png`, `.webp` ou `.svg` (SVG : `viewBox="0 0 1400 600"`).
+2. L’enregistrer dans `atelier-cartes/uploads/illustrations/`. Nom : minuscules, chiffres, `-`, `_` ou `.` uniquement (ex. `dragon-grotte.jpg`).
+3. La rattacher à une affaire : dans `atelier-cartes/js/data.js`, mettre `image: "uploads/illustrations/dragon-grotte.jpg"` sur la carte `affaire` (chemin relatif, sans `/` initial). Pour un grimoire JSON déjà exporté, mettre le même chemin dans `image` de la carte `affaire` **et** l’ajouter au tableau `uploads`.
+4. Si le navigateur contient déjà un projet, utiliser « Réinitialiser le grimoire » ou réimporter le JSON : le projet local prime sur `data.js`.
+
+Illustrations fournies : `atelier-cartes/assets/illustrations/` (CC0, openclipart).
+
+## Sauvegarde et partage
+
+- `localStorage` : clé `tribunal-du-chaos-atelier-v2`.
+- **Exporter / importer le grimoire JSON** (barre latérale). L’export contient les textes et les **chemins** des images, pas les images : partagez aussi `uploads/illustrations/`.
+- Format **v2 uniquement** : l’ancien format (carte « faits », 4 témoins sans côtés, CSV, images en base64) n’est plus lu.
+
+## Format JSON (v2)
 
 ```json
 {
-  "version": 1,
-  "settings": {
-    "gameName": "Le Tribunal du Chaos",
-    "subtitle": "Chroniques du royaume",
-    "emblem": "⚖",
-    "backNote": "",
-    "accent": "#733b3b",
-    "fontStyle": "ornate",
-    "frameStyle": "double",
-    "ornament": "✦",
-    "familyColors": {}
-  },
+  "version": 2,
+  "settings": { "gameName": "", "subtitle": "", "accent": "#733b3b", "fontStyle": "ornate", "frameStyle": "double" },
+  "uploads": ["uploads/illustrations/exemple.jpg"],
   "cases": [{
-    "id": "linge-dragon",
-    "title": "Le dragon et le linge royal",
-    "summary": "Un linge brûlé après un désaccord sur un étendoir.",
-    "context": "Le linge du voisin a brûlé près de la grotte de Brasier.",
-    "disagreement": "Le voisin soupçonne une vengeance ; le dragon parle d’un éternuement.",
-    "image": "",
+    "id": "slug-unique", "title": "", "summary": "", "color": "#7a2e2e",
     "cards": [
-      {"id":"linge-affaire","type":"affaire","title":"Le royaume contre Brasier","role":"Audience publique","fields":{"content":"Le linge a brûlé près de la grotte du dragon.","facts":"Le linge est brûlé ; Brasier s’était plaint de l’étendoir.","interpretations":"Vengeance ou accident ?"},"image":""},
-      {"id":"linge-accusateur","type":"accusateur","title":"Maître Aubépine","role":"Accusation","fields":{"objective":"Obtenir réparation.","available":"Un grondement a précédé la fumée.","evidence":"Montrer les draps brûlés.","interpretation":"Brasier s’est vengé de la dispute.","unknown":"Un encens brûlait près du linge."}},
-      {"id":"linge-accuse","type":"accuse","title":"Brasier","role":"Défense","fields":{"objective":"Expliquer l’incident et réparer le dommage.","content":"J’ai éternué en sortant de ma grotte.","available":"Le pollen irritait mon nez.","evidence":"Je n’ai pas visé le jardin.","unknown":"Le vent poussait vers l’étendoir."}},
-      {"id":"linge-faits","type":"faits","title":"Faits et indices","role":"Repères de l’enquête","fields":{"established":"Le linge a brûlé ; le vent allait vers la corde.","uncertain":"Personne n’a vu l’origine de la flamme.","questions":"Un encens a-t-il déclenché le feu ?"}},
-      {"id":"linge-temoin-a","type":"temoin","title":"Pimprenelle","role":"Témoin","fields":{"content":"J’ai vu de la fumée près de la corde.","facts":"Le vent soufflait vers le linge.","indirect":"Un apprenti parle d’un rugissement.","interpretation":"J’ai d’abord soupçonné le dragon.","reliability":"J’ai vu la fumée, pas le départ du feu."}},
-      {"id":"linge-temoin-b","type":"temoin","title":"Le jeune écuyer","role":"Témoin","fields":{"content":"J’ai aperçu une lueur près de la corde.","facts":"Je n’ai vu personne produire la flamme.","indirect":"On m’a dit que Brasier avait éternué.","interpretation":"La lueur pouvait venir de l’encens.","reliability":"J’ai vu la lueur mais pas son origine."}},
-      {"id":"linge-temoin-c","type":"temoin","title":"L’apprenti de la forge","role":"Témoin","fields":{"content":"Je travaillais près du jardin.","facts":"J’ai entendu un bruit avant la fumée.","indirect":"On m’a parlé de la dispute.","interpretation":"Le bruit pouvait être un éternuement.","reliability":"Je ne voyais pas le départ du feu."}},
-      {"id":"linge-temoin-d","type":"temoin","title":"La marchande d’encens","role":"Témoin","fields":{"content":"J’ai vendu de l’encens au voisin.","facts":"Il se consume avec une petite flamme.","indirect":"On m’a dit que le linge avait brûlé.","interpretation":"Une étincelle a pu s’envoler.","reliability":"Je n’étais pas présente à l’incident."}},
-      {"id":"linge-debrief","type":"debrief","title":"Après l’audience","role":"Débrief","fields":{"origin":"L’étendoir gênait l’accès à la grotte.","aggravating":"La dispute a orienté les soupçons.","bias":"Attribution hostile et biais de confirmation.","needs":"Sécurité, accès et respect du voisinage.","deescalation":"Vérifier les indices et convenir d’un emplacement sûr.","question":"Qu’auriez-vous vérifié avant de conclure ?"}}
+      { "id": "…", "type": "affaire", "title": "", "role": "", "image": "uploads/illustrations/exemple.jpg",
+        "fields": { "content": "", "accusation": "", "defense": "" } }
     ]
   }]
 }
 ```
 
-Les quatre témoins sont obligatoires. Pour choisir une illustration précise, renseigner `image` sur l’objet affaire ou sur sa carte `affaire` avec une data URI. Sinon, l’application en choisit une au hasard à l’import. L’ordre dans le tableau n’est pas imposé : l’impression utilise l’ordre du gabarit ci-dessus.
+Exactement 9 cartes par affaire : `affaire` ×1, `juge` ×1, `accusateur` ×1, `accuse` ×1, `temoin` ×4, `debrief` ×1. Champs par type :
 
-## Format CSV accepté
+- `affaire` : `content`, `accusation`, `defense`
+- `juge` : `mission`, `steps`
+- `accusateur` / `accuse` : `objective`, `facts`
+- `temoin` : `facts`
+- `debrief` : `story`, `mechanisms`, `ending`
 
-Le CSV est importable. Il contient **une ligne par carte** ; les métadonnées de l’affaire sont répétées pour chaque ligne de cette affaire. Encodage UTF-8, séparateur virgule, première ligne d’en-tête, échappement CSV standard (valeur entre guillemets si elle contient une virgule, un saut de ligne ou un guillemet ; un guillemet interne est doublé). `fields_json` est un objet JSON sérialisé, lui-même échappé comme champ CSV.
+`image` n’existe que sur `affaire` et doit être un chemin `assets/illustrations/…` ou `uploads/illustrations/…`. Couleurs en `#rrggbb`.
 
-Colonnes obligatoires :
+## Limites de texte conseillées
 
-```text
-case_id,case_title,card_order,card_type,card_title,role,fields_json
-```
+Titre 48 caractères, rôle 32, texte 650 (280 avec illustration). Les dépassements ne sont pas coupés, mais signalés dans l’éditeur.
 
-Colonnes facultatives :
+## Se déplacer sur le site (pour un agent)
 
-```text
-case_summary,case_context,case_disagreement,case_image,card_id,image_data_url,image_position
-```
+Page unique, sans routage : tout s’affiche dans `#app-content`. Navigation par les boutons `[data-view="…"]` de la barre latérale :
 
-- `card_order` est un entier unique de 0 à 8 par affaire ; il détermine notamment l’ordre des quatre témoins. Les familles sont imprimées dans l’ordre du gabarit.
-- `fields_json` utilise les clés du tableau JSON ci-dessus.
-- `card_id` est facultatif ; l’application crée un identifiant s’il manque.
-- `case_image` et `image_data_url` sur la ligne de la carte `affaire` doivent être des data URI ou rester vides, jamais des chemins de disque. Une image renseignée sur une autre ligne de carte n’est pas utilisée. Si l’affaire n’a aucune image, l’application en choisit une au hasard.
-- Les paramètres graphiques ne sont pas stockés en CSV ; l’import CSV reprend le thème par défaut.
-- Toutes les lignes de même `case_id` doivent garder le même `case_title`.
+| `data-view` | Écran |
+|---|---|
+| `dashboard` | Bureau : statistiques, liste des affaires |
+| `cases` | Registre des affaires (créer, dupliquer, supprimer) |
+| `library` | Bibliothèque de toutes les cartes (recherche, filtres) |
+| `customize` | Enluminures & dos : nom du jeu, accent, polices, cadres |
+| `printing` | Impression A4 (affaire, famille, copies, recto/verso) |
 
-Exemple de deux lignes seulement, à compléter obligatoirement avec les sept autres cartes du gabarit avant import :
+L’éditeur s’ouvre avec `[data-action="open-case"]` (bouton « Ouvrir le dossier » d’une affaire) : liste des 9 cartes à gauche, formulaire `#case-form` et champs `field.<clé>` au centre, aperçu recto/verso à droite. Autres actions : `new-case`, `duplicate-case`, `delete-case`, `select-card`, `reset`. Pour tout automatiser sans interface, éditer `data.js` ou importer un JSON v2 (« Importer un grimoire »). Il n’y a pas d’import CSV.
 
-```csv
-case_id,case_title,case_summary,case_context,case_disagreement,card_order,card_type,card_title,role,fields_json,image_data_url,image_position
-linge-dragon,"Le dragon et le linge royal","Un linge brûlé","Le linge brûle près de la grotte","Le voisin soupçonne une vengeance",0,affaire,"Le royaume contre Brasier","Audience publique","{""content"":""Le linge a brûlé."",""facts"":""Brasier s’était plaint de l’étendoir."",""interpretations"":""Vengeance ou accident ?""}",,center
-linge-dragon,"Le dragon et le linge royal","Un linge brûlé","Le linge brûle près de la grotte","Le voisin soupçonne une vengeance",1,accusateur,"Maître Aubépine","Accusation","{""objective"":""Obtenir réparation."",""available"":""Un grondement a précédé la fumée."",""evidence"":""Montrer les draps brûlés."",""interpretation"":""Brasier s’est vengé."",""unknown"":""Un encens brûlait près du linge.""}",,center
-```
+## Notes pour les IA et contributeurs
 
-## Consigne à transmettre à une IA
-
-> Génère un projet JSON importable par L’Atelier du Greffier en respectant exactement le schéma et les clés `fields` de ce README. Pour chaque affaire, produis exactement neuf cartes : une `affaire` présentant le contexte public, une `accuse` et une `accusateur` avec leurs objectifs et leurs versions, quatre `temoin` distincts avec des observations et des limites de fiabilité, une `debrief` analysant le conflit et proposant plusieurs pistes de désamorçage, et une `faits` séparant faits établis, incertitudes et questions. Ne crée aucune carte `jury` ou `verdict`. Attribue des identifiants uniques aux affaires et à toutes les cartes ; fournis un titre, un rôle et des champs textuels utiles à chacune. Distingue clairement observations directes, informations rapportées et interprétations ; assure la cohérence des informations confidentielles et évite de présenter une hypothèse comme un fait. Respecte les limites : titre ≤ 48 caractères, rôle ≤ 32, texte cumulé ≤ 650 caractères sans image ou ≤ 450 avec image. Retourne uniquement le JSON, sans Markdown ni chemins locaux d’images.
-
-## Personnalisation hors ligne
-
-Le thème, les cadres, ornements, typographies, dos de cartes et couleurs de famille sont personnalisables. Les illustrations des rectos sont affichées en pleine largeur dans un cadre décoratif inspiré des enluminures, de hauteur fixe ; l’image est recadrée pour remplir le cadre sans être déformée. Google Fonts peut fournir une typographie enluminée si Internet est disponible ; des polices de repli lisibles sont utilisées hors ligne.
+- Code : [`data.js`](./atelier-cartes/js/data.js) (exemples), [`icons.js`](./atelier-cartes/js/icons.js) (logos des dos), [`storage.js`](./atelier-cartes/js/storage.js), [`app.js`](./atelier-cartes/js/app.js) (interface, aperçu, impression, import).
+- Ne pas réintroduire de compatibilité avec l’ancien format.
+- Pour ajouter une illustration fournie : déposer le fichier dans `assets/illustrations/` et l’ajouter à `illustrations` dans `data.js`.

@@ -1,74 +1,54 @@
 <!doctype html>
 <html lang="fr">
-
 	<head>
-		<meta charset="utf-8">
-		<meta name="viewport"
-			content="width=device-width, initial-scale=1">
-		<meta name="theme-color"
-			content="#172123">
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="theme-color" content="#172123" />
 		<title>L'Atelier du Tribunal - Le Tribunal du Chaos</title>
-		<link rel="stylesheet"
-			href="css/atelier.css">
-		<link rel="stylesheet"
-			href="css/print.css"
-			media="print">
+		<link rel="stylesheet" href="css/atelier.css" />
+		<link rel="stylesheet" href="css/print.css" media="print" />
 	</head>
 
 	<body>
 		<div class="app-shell">
 			<aside class="sidebar">
-				<a class="brand"
-					href="#"
-					data-view="dashboard"
-					aria-label="Retour au bureau du greffier">
-					<span class="brand-seal"
-						aria-hidden="true">⚖</span>
+				<a class="brand" href="#" data-view="dashboard" aria-label="Retour au bureau du greffier">
+					<span class="brand-seal" aria-hidden="true">⚖</span>
 					<span><small>LE TRIBUNAL DU CHAOS</small><strong>L’Atelier du Greffier</strong></span>
 				</a>
 				<div class="nav-caption">LE GRIMOIRE</div>
-				<nav class="main-nav"
-					aria-label="Navigation principale">
-					<button data-view="dashboard"
-						class="nav-link active"><span>⌂</span> Bureau du greffier</button>
-					<button data-view="cases"
-						class="nav-link"><span>▤</span> Dossiers d’affaires</button>
-					<button data-view="library"
-						class="nav-link"><span>♧</span> Bibliothèque des cartes</button>
-					<button data-view="customize"
-						class="nav-link"><span>✥</span> Enluminures &amp; dos</button>
-					<button data-view="printing"
-						class="nav-link"><span>▧</span> Imprimer les cartes</button>
+				<nav class="main-nav" aria-label="Navigation principale">
+					<button data-view="dashboard" class="nav-link active"><span>⌂</span> Bureau du greffier</button>
+					<button data-view="cases" class="nav-link"><span>▤</span> Dossiers d’affaires</button>
+					<button data-view="library" class="nav-link"><span>♧</span> Bibliothèque des cartes</button>
+					<button data-view="customize" class="nav-link"><span>✥</span> Enluminures &amp; dos</button>
+					<button data-view="printing" class="nav-link"><span>▧</span> Imprimer les cartes</button>
 				</nav>
 				<div class="sidebar-bottom">
-					<button class="subtle-button"
-						data-action="export">Exporter le grimoire JSON</button>
-					<label class="subtle-button import-button">Importer un grimoire<input type="file"
-							id="import-file"
-							accept=".json,.csv,application/json,text/csv"></label>
-					<p>Un export JSON conserve aussi les illustrations importées.</p>
+					<button class="subtle-button" data-action="export">Exporter le grimoire JSON</button>
+					<label class="subtle-button import-button"
+						>Importer un grimoire<input type="file" id="import-file" accept=".json,application/json"
+					/></label>
+					<p>L’export JSON référence les images de uploads/illustrations/ : conservez ce dossier avec lui.</p>
 				</div>
 			</aside>
 			<main class="workspace">
 				<header class="topbar">
-					<div><span class="eyebrow">CHAMBRE DES ARCHIVES ROYALES</span>
+					<div>
+						<span class="eyebrow">CHAMBRE DES ARCHIVES ROYALES</span>
 						<h1 id="page-title">Bureau du greffier</h1>
 					</div>
 					<div class="top-actions">
-						<button class="button button-gold"
-							data-action="new-case">＋ Nouvelle affaire</button>
+						<button class="button button-gold" data-action="new-case">＋ Nouvelle affaire</button>
 					</div>
 				</header>
-				<div id="toast"
-					class="toast"
-					role="status"
-					aria-live="polite"></div>
+				<div id="toast" class="toast" role="status" aria-live="polite"></div>
 				<div id="app-content"></div>
 			</main>
 		</div>
 		<script src="js/data.js"></script>
+		<script src="js/icons.js"></script>
 		<script src="js/storage.js"></script>
 		<script src="js/app.js"></script>
 	</body>
-
 </html>

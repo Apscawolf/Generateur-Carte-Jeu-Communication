@@ -4,7 +4,6 @@
 }
 
 @media print {
-
 	html,
 	body {
 		width: 210mm !important;
@@ -23,7 +22,7 @@
 		visibility: visible !important;
 	}
 
-	body>.app-shell {
+	body > .app-shell {
 		display: block !important;
 		width: 210mm !important;
 		min-height: 0 !important;
@@ -32,7 +31,7 @@
 	.sidebar,
 	.topbar,
 	#toast,
-	#app-content> :not(#print-output) {
+	#app-content > :not(#print-output) {
 		display: none !important;
 	}
 
@@ -94,7 +93,7 @@
 		overflow: hidden;
 		padding: 0;
 		position: relative;
-		border: .2mm dashed #746b58;
+		border: 0.2mm dashed #746b58;
 		background: #e4d4ad !important;
 		-webkit-print-color-adjust: exact;
 		print-color-adjust: exact;
@@ -105,8 +104,8 @@
 		width: calc(100% - 4.8mm);
 		height: calc(100% - 4.8mm);
 		margin: 2.4mm;
-		border: .45mm double var(--family-color, #846838);
-		outline: .25mm solid var(--family-color, #a58a55);
+		border: 0.45mm double var(--family-color, #846838);
+		outline: 0.25mm solid var(--family-color, #a58a55);
 		outline-offset: -1.5mm;
 		padding: 3.5mm 3mm 2.5mm;
 		background: #f2e7cb !important;
@@ -128,7 +127,9 @@
 		content: "❧";
 		position: absolute;
 		color: var(--card-accent, #846838);
-		font: 10pt Georgia, serif;
+		font:
+			10pt Georgia,
+			serif;
 	}
 
 	.print-card-inner:before {
@@ -157,7 +158,7 @@
 	.print-card-kind {
 		font: 600 7pt var(--display);
 		color: var(--family-color, #775e33);
-		letter-spacing: .08em;
+		letter-spacing: 0.08em;
 		text-transform: uppercase;
 	}
 
@@ -170,16 +171,17 @@
 
 	.print-illustration-frame {
 		position: relative;
-		flex: 0 0 26mm;
+		flex: none;
 		width: 100%;
-		height: 26mm;
 		margin: 0 0 2mm;
-		padding: .7mm;
-		border: .9mm double #80633b;
-		outline: .25mm solid #c4a66a;
+		padding: 0.7mm;
+		border: 0.9mm double #80633b;
+		outline: 0.25mm solid #c4a66a;
 		outline-offset: -1mm;
 		background: linear-gradient(135deg, #dfc991, #927043) !important;
-		box-shadow: inset 0 0 0 .25mm #f4e5bb, 0 .4mm 1mm rgba(38, 29, 17, .28);
+		box-shadow:
+			inset 0 0 0 0.25mm #f4e5bb,
+			0 0.4mm 1mm rgba(38, 29, 17, 0.28);
 		-webkit-print-color-adjust: exact;
 		print-color-adjust: exact;
 	}
@@ -189,30 +191,31 @@
 		position: absolute;
 		z-index: 1;
 		color: #73552e;
-		font: 7pt Georgia, serif;
+		font:
+			7pt Georgia,
+			serif;
 		line-height: 1;
-		text-shadow: 0 .2mm #f1dfb3;
+		text-shadow: 0 0.2mm #f1dfb3;
 	}
 
 	.print-illustration-frame:before {
 		content: "❧";
-		top: -.4mm;
-		left: -.4mm;
+		top: -0.4mm;
+		left: -0.4mm;
 	}
 
 	.print-illustration-frame:after {
 		content: "❧";
-		right: -.4mm;
-		bottom: -.4mm;
+		right: -0.4mm;
+		bottom: -0.4mm;
 		transform: rotate(180deg);
 	}
 
 	.print-card-image {
 		display: block;
 		width: 100%;
-		height: 100%;
+		aspect-ratio: 7 / 3;
 		object-fit: cover;
-		object-position: center;
 	}
 
 	.print-card-content {
@@ -225,46 +228,47 @@
 		overflow: hidden;
 	}
 
+	.print-card-content.with-image {
+		font-size: 8pt;
+	}
+
 	.print-card-role {
-		border-top: .25mm solid #bba676;
+		border-top: 0.25mm solid #bba676;
 		padding-top: 1.5mm;
 		margin-top: 1.5mm;
 		font: 600 7pt var(--display);
 	}
 
 	.print-card-back {
-		background: #243532 !important;
-		color: #ead9ae;
+		font-size: 3mm;
+		padding: 0;
+		border: 0.2mm dashed #746b58;
 	}
 
-	.print-card-back .print-card-inner {
-		background: repeating-linear-gradient(45deg, #263533, #263533 2mm, #2d3e38 2mm, #2d3e38 4mm) !important;
-		color: #ead9ae;
-		border-color: #c0a15e;
+	.print-card-back .back-face {
+		padding: 4.2mm;
+	}
+
+	.side-icon {
+		width: 100%;
+		flex: none;
+		display: flex;
 		justify-content: center;
+		padding: 1.5mm 0;
+		margin-bottom: 2mm;
+		background: #2f3b3f !important;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
 	}
 
-	.print-back-emblem {
-		display: block;
-		width: 38mm;
-		height: 38mm;
-		font-size: 52pt;
-		line-height: 38mm;
-		text-align: center;
-		color: var(--card-accent, #d7bd7d);
-		margin: 0 auto 4mm;
+	.side-icon svg {
+		width: 15mm;
+		height: 15mm;
 	}
 
-	.print-back-name {
-		font: 600 11pt var(--display);
-		color: #efdfb9;
-	}
-
-	.print-back-subtitle,
-	.print-back-note {
-		font: 9pt var(--serif);
-		color: #c4b58f;
-		margin-top: 2mm
+	.sec {
+		font-weight: 700;
+		color: var(--family-color, #795b30);
 	}
 
 	.print-blank {
