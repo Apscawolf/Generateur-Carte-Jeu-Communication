@@ -167,7 +167,11 @@
 		}
 	];
 
-	["dragon.svg", "sorcier.svg", "porte-fantasy.svg"].forEach((file, index) => {
+	[
+		"village-foret.svg",
+		"audience-parchemin.svg",
+		"chateau-crepuscule.svg"
+	].forEach((file, index) => {
 		cases[index].cards[0].image = "assets/illustrations/" + file;
 	});
 
@@ -177,10 +181,9 @@
 		cases,
 		uid,
 		illustrations: [
-			{ src: "assets/illustrations/dragon.svg", name: "Dragon" },
-			{ src: "assets/illustrations/sorcier.svg", name: "Sorcier" },
-			{ src: "assets/illustrations/chevalier.svg", name: "Chevalier en joute" },
-			{ src: "assets/illustrations/porte-fantasy.svg", name: "Porte fantasy" }
+			{ src: "assets/illustrations/chateau-crepuscule.svg", name: "Château au crépuscule" },
+			{ src: "assets/illustrations/village-foret.svg", name: "Village de la forêt" },
+			{ src: "assets/illustrations/audience-parchemin.svg", name: "Audience et parchemin" }
 		]
 	};
 })();

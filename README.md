@@ -73,6 +73,9 @@ Une affaire = une feuille A4 de 3 × 3 cartes de **70 × 99 mm**, suivie de sa f
 
 Seule la carte **Affaire** a une illustration (les autres faces manquent de place ; les logos ne sont que sur les dos).
 
+- Les trois affaires d’exemple utilisent chacune une illustration différente. Si une nouvelle affaire ou un projet chargé n’a pas d’image, une illustration générique est choisie parmi les trois visuels fournis, d’après l’identifiant de la carte.
+- Le chemin choisi est enregistré dans le projet du navigateur et dans les exports JSON : il reste identique après rechargement. Dans l’éditeur, choisissez une illustration précise ou importez la vôtre pour la remplacer ; « Choisir l’illustration automatique » rétablit et enregistre le choix par défaut.
+- L’illustration automatique occupe elle aussi de la place : la limite conseillée de **280 caractères** s’applique à toutes les cartes Affaire.
 - **Dimension parfaite : 1400 × 600 px (ratio 7:3), JPEG ou PNG.** Le cadre de la carte a ce ratio ; l’image y est affichée en `object-fit: cover`.
 - Gardez le sujet au centre : tout import est recadré au centre au ratio 7:3.
 - Formats acceptés : PNG, JPEG, WebP, GIF, SVG ; 15 Mo maximum avant conversion.
@@ -93,7 +96,7 @@ Une IA n’a pas besoin de l’interface :
 3. La rattacher à une affaire : dans `atelier-cartes/js/data.js`, mettre `image: "uploads/illustrations/dragon-grotte.jpg"` sur la carte `affaire` (chemin relatif, sans `/` initial). Pour un grimoire JSON déjà exporté, mettre le même chemin dans `image` de la carte `affaire` **et** l’ajouter au tableau `uploads`.
 4. Si le navigateur contient déjà un projet, utiliser « Réinitialiser le grimoire » ou réimporter le JSON : le projet local prime sur `data.js`.
 
-Illustrations fournies : `atelier-cartes/assets/illustrations/` (CC0, openclipart).
+Illustrations fournies : [`atelier-cartes/assets/illustrations/`](./atelier-cartes/assets/illustrations/) (SVG originaux créés pour le projet : château, village et audience). Les projets sauvegardés conservent leurs chemins d’image : si un ancien fichier référencé a été supprimé, l’application le signale et il faut choisir une autre illustration dans l’éditeur. Aucun projet sauvegardé n’est réinitialisé automatiquement.
 
 ## Sauvegarde et partage
 
@@ -126,7 +129,7 @@ Exactement 9 cartes par affaire : `affaire` ×1, `juge` ×1, `accusateur` ×1, `
 - `temoin` : `facts`
 - `debrief` : `story`, `mechanisms`, `ending`
 
-`image` n’existe que sur `affaire` et doit être un chemin `assets/illustrations/…` ou `uploads/illustrations/…`. Couleurs en `#rrggbb`.
+`image` n’existe que sur `affaire` et doit être un chemin `assets/illustrations/…` ou `uploads/illustrations/…`. S’il est vide ou absent lors du chargement ou de l’import, l’application choisit une illustration automatique et enregistre son chemin dans le projet. Couleurs en `#rrggbb`.
 
 ## Limites de texte conseillées
 

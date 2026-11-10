@@ -121,6 +121,25 @@
 	const imgTag = (path, className) =>
 		`<img class="${className}" src="${esc(path)}" data-path="${esc(path)}" alt="">`;
 
+	function defaultIllustration(card) {
+		const hash = Array.from(card.id).reduce((value, char) => (Math.imul(value, 31) + char.charCodeAt(0)) >>> 0, 0);
+		return BUILTIN[hash % BUILTIN.length].src;
+	}
+
+	function assignDefaultIllustrations(data) {
+		let changed = false;
+		data.cases.forEach((item) => {
+			const card = item.cards.find((entry) => entry.type === "affaire");
+			if (card && !card.image) {
+				card.image = defaultIllustration(card);
+				changed = true;
+			}
+		});
+		return changed;
+	}
+
+	const illustrationFor = (card) => (card && card.type === "affaire" ? card.image || "" : "");
+
 	function validateProject(data) {
 		const fail = () => {
 			throw new Error("Format du grimoire non reconnu (version 2 attendue : 9 cartes par affaire).");
@@ -205,12 +224,13 @@
 	// ---------- Longueur des textes ----------
 	function cardLength(card) {
 		const body = cardText(card).length;
-		const limit = card.image ? CARD_LIMITS.bodyWithImage : CARD_LIMITS.body;
+		const illustrated = Boolean(illustrationFor(card));
+		const limit = illustrated ? CARD_LIMITS.bodyWithImage : CARD_LIMITS.body;
 		const warnings = [];
 		if (card.title.length > CARD_LIMITS.title)
 			warnings.push(`Titre : ${card.title.length}/${CARD_LIMITS.title}.`);
 		if (card.role.length > CARD_LIMITS.role) warnings.push(`Rôle : ${card.role.length}/${CARD_LIMITS.role}.`);
-		if (body > limit) warnings.push(`Texte : ${body}/${limit}${card.image ? " avec illustration" : ""}.`);
+		if (body > limit) warnings.push(`Texte : ${body}/${limit}${illustrated ? " avec illustration" : ""}.`);
 		return { body, limit, warnings };
 	}
 	function lengthStatus(card) {
@@ -237,8 +257,8 @@
 		const frame = print ? "print-illustration-frame" : "illustration-frame";
 		let media = "";
 		if (extra) media = extra.media;
-		else if (card.type === "affaire" && card.image)
-			media = `<div class="${frame}">${imgTag(card.image, print ? "print-card-image" : "preview-image")}</div>`;
+		else if (illustrationFor(card))
+			media = `<div class="${frame}">${imgTag(illustrationFor(card), print ? "print-card-image" : "preview-image")}</div>`;
 		const body = extra ? esc(extra.text) : frontBody(card) || "Le texte de la carte apparaîtra ici.";
 		const inner = `<div class="${print ? "print-card-inner" : "card-preview-inner"} frame-${frameStyle()}" style="--family-color:${FAMILY_COLORS[card.type]}"><div class="card-ornament">⚖</div><div class="${p}-kind">${esc(typeLabel(card.type))}</div><div class="${p}-title">${esc(card.title || "Sans titre")}</div>${media}<div class="${print ? "print-card-content" : "preview-text"}${media && !extra ? " with-image" : ""}">${body}</div><div class="${p}-role">${esc(card.role || typeLabel(card.type))}</div></div>`;
 		return print ? `<div class="print-card">${inner}</div>` : `<div class="card-preview">${inner}</div>`;
@@ -278,7 +298,7 @@
 		return item.cards.every((card) => card.title && Object.values(card.fields).some((v) => v.trim()));
 	}
 	function caseCard(item) {
-		const art = (item.cards.find((card) => card.type === "affaire") || {}).image;
+		const art = illustrationFor(item.cards.find((card) => card.type === "affaire"));
 		return `<article class="case-card" style="border-top:5px solid ${safeColor(item.color, "#733b3b")}">${art ? imgTag(art, "case-card-image") : ""}<span class="type-label">${isComplete(item) ? "dossier préparé" : "à compléter"}</span>
 <h3>${esc(item.title)}</h3><p>${esc(item.summary || "Aucun résumé pour le moment.")}</p>
 <p class="case-meta">${item.cards.length} cartes · ${art ? "illustré" : "sans illustration"}</p>
@@ -326,7 +346,8 @@
 			...BUILTIN.map((entry) => [entry.src, entry.name]),
 			...project.uploads.map((path) => [path, "Importée : " + path.split("/").pop()])
 		];
-		return `<option value="">Aucune illustration</option>${known.map(([src, name]) => `<option value="${esc(src)}" ${src === current ? "selected" : ""}>${esc(name)}</option>`).join("")}`;
+		if (current && !known.some(([src]) => src === current)) known.push([current, "Image du projet : " + current]);
+		return `<option value="">Choisir l’illustration automatique</option>${known.map(([src, name]) => `<option value="${esc(src)}" ${src === current ? "selected" : ""}>${esc(name)}</option>`).join("")}`;
 	}
 	function renderEditor() {
 		const item = getCase(ui.caseId);
@@ -623,6 +644,7 @@
 			]
 		};
 		const model = project.cases[0] && project.cases[0].cards.find((card) => card.type === "juge");
+		assignDefaultIllustrations({ cases: [item] });
 		if (model) {
 			const juge = item.cards[1];
 			juge.fields = { mission: model.fields.mission || "", steps: model.fields.steps || "" };
@@ -688,6 +710,7 @@
 			)
 		)
 			return;
+		assignDefaultIllustrations(incoming);
 		window.TDC_STORAGE.save(incoming, true);
 		Object.assign(project, incoming);
 		ui.caseId = project.cases[0] && project.cases[0].id;
@@ -810,7 +833,7 @@
 		if (scope === "case" && item)
 			item[key] = key === "color" ? safeColor(target.value, "#733b3b") : target.value;
 		else if (scope === "card" && card) {
-			if (key === "image") card.image = IMAGE_PATH.test(target.value) ? target.value : "";
+			if (key === "image") card.image = target.value === "" ? defaultIllustration(card) : target.value;
 			else card[key] = target.value;
 		} else if (scope === "field" && card) card.fields[key] = target.value;
 		else if (scope === "settings") project.settings[key] = target.value;
@@ -963,22 +986,26 @@
 			reader.readAsText(file);
 		}
 	});
+	const missingImages = new Set();
 	// Si le fichier d’une image importée n’est pas (encore) dans uploads/, on utilise la copie locale.
 	document.addEventListener(
 		"error",
 		(event) => {
 			const img = event.target;
-			if (
-				img.tagName === "IMG" &&
-				img.dataset.path &&
-				images[img.dataset.path] &&
-				img.src !== images[img.dataset.path]
-			)
-				img.src = images[img.dataset.path];
+			if (img.tagName !== "IMG" || !img.dataset.path) return;
+			const path = img.dataset.path;
+			if (images[path] && img.src !== images[path]) {
+				img.src = images[path];
+			} else if (!missingImages.has(path)) {
+				missingImages.add(path);
+				console.error("Illustration introuvable :", path);
+				notify(`Illustration introuvable : ${path}. Choisissez une autre image dans l’éditeur.`, true);
+			}
 		},
 		true
 	);
 
+	if (!window.TDC_STORAGE_LOAD_ERROR && assignDefaultIllustrations(project)) persist();
 	setView("dashboard");
 	if (window.TDC_STORAGE_LOAD_ERROR)
 		notify(
